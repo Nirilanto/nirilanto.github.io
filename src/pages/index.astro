@@ -1,12 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { site } from '../data/site';
+import Hero from '../components/Hero.astro';
 ---
 
 <Base>
-  <section class="container-page flex min-h-svh flex-col justify-end pt-(--nav-h) pb-16">
-    <p class="label">Portfolio</p>
-    <h1 class="text-display mt-4">{site.name}</h1>
-    <p class="text-muted text-lead mt-6 max-w-[40ch]">{site.tagline}</p>
-  </section>
+  <Hero />
 </Base>

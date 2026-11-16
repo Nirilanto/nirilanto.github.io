@@ -47,25 +47,26 @@ import { nav, site } from '../data/site';
       </span>
     </button>
   </div>
-
-  <div id="menu-mobile" class="menu-mobile lg:hidden" hidden>
-    <nav aria-label="Navigation mobile" class="container-page flex h-full flex-col pt-6 pb-10">
-      <ul class="flex flex-col">
-        {nav.map((item, i) => (
-          <li class="border-line border-b">
-            <a href={item.href} class="flex min-h-16 items-baseline gap-4 py-4" data-menu-link>
-              <span class="label">{String(i + 1).padStart(2, '0')}</span>
-              <span class="font-display text-4xl font-bold tracking-tighter">{item.label}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <a href="/#contact" class="btn btn-primary mt-8 self-start" data-menu-link>
-        Me contacter
-      </a>
-    </nav>
-  </div>
 </header>
+
+<!-- Hors du <header> : son backdrop-filter créerait le bloc conteneur du panneau fixe. -->
+<div id="menu-mobile" class="menu-mobile z-40 lg:hidden" hidden>
+  <nav aria-label="Navigation mobile" class="container-page flex h-full flex-col pt-6 pb-10">
+    <ul class="flex flex-col">
+      {nav.map((item, i) => (
+        <li class="border-line border-b">
+          <a href={item.href} class="flex min-h-16 items-baseline gap-4 py-4" data-menu-link>
+            <span class="label">{String(i + 1).padStart(2, '0')}</span>
+            <span class="font-display text-4xl font-bold tracking-tighter">{item.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <a href="/#contact" class="btn btn-primary mt-8 self-start" data-menu-link>
+      Me contacter
+    </a>
+  </nav>
+</div>
 
 <style>
   .site-nav {
