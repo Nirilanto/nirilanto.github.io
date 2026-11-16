@@ -1,0 +1,74 @@
+---
+import Icon from './Icon.astro';
+import { toLocale, useTranslations } from '../i18n';
+
+const t = useTranslations(toLocale(Astro.currentLocale));
+---
+
+<button
+  type="button"
+  class="theme-toggle flex size-11 items-center justify-center rounded-full"
+  data-theme-toggle
+  data-label-light={t('theme.toLight')}
+  data-label-dark={t('theme.toDark')}
+  aria-label={t('theme.toDark')}
+>
+  <span class="theme-icon-moon">
+    <Icon name="moon" size={20} />
+  </span>
+  <span class="theme-icon-sun">
+    <Icon name="sun" size={20} />
+  </span>
+</button>
+
+<style>
+  .theme-toggle {
+    color: var(--color-muted);
+    transition: color var(--duration-fast) var(--ease-expo);
+  }
+  .theme-toggle:hover,
+  .theme-toggle:focus-visible {
+    color: var(--color-fg);
+  }
+  /* En clair on propose la lune, en sombre le soleil. */
+  .theme-icon-sun,
+  :global([data-theme='dark']) .theme-icon-moon {
+    display: none;
+  }
+  :global([data-theme='dark']) .theme-icon-sun {
+    display: block;
+  }
+</style>
+
+<script>
+  function syncLabels() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((button) => {
+      const label = dark ? button.dataset.labelLight : button.dataset.labelDark;
+      if (label) button.setAttribute('aria-label', label);
+    });
+  }
+
+  function initThemeToggle() {
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((button) => {
+      if (button.dataset.ready) return;
+      button.dataset.ready = 'true';
+      button.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem('theme', next);
+        } catch {
+          /* stockage indisponible : le choix vaut pour la page en cours */
+        }
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute('content', next === 'dark' ? '#070B18' : '#F4F8FF');
+        syncLabels();
+      });
+    });
+    syncLabels();
+  }
+
+  document.addEventListener('astro:page-load', initThemeToggle);
+</script>

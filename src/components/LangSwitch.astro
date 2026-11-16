@@ -1,0 +1,44 @@
+---
+import { localeMeta, locales, switchLocalePath, toLocale, useTranslations } from '../i18n';
+
+const current = toLocale(Astro.currentLocale);
+const t = useTranslations(current);
+---
+
+<ul class="lang-switch flex items-center" aria-label={t('lang.switch')}>
+  {locales.map((locale) => (
+    <li>
+      <a
+        href={switchLocalePath(Astro.url.pathname, locale)}
+        hreflang={locale}
+        lang={locale}
+        aria-current={locale === current ? 'true' : undefined}
+        aria-label={localeMeta[locale].name}
+        class="flex min-h-11 min-w-11 items-center justify-center"
+      >
+        {localeMeta[locale].label}
+      </a>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .lang-switch a {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    transition: color var(--duration-fast) var(--ease-expo);
+  }
+  .lang-switch a:hover,
+  .lang-switch a:focus-visible,
+  .lang-switch a[aria-current='true'] {
+    color: var(--color-fg);
+  }
+  .lang-switch a[aria-current='true'] {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+</style>

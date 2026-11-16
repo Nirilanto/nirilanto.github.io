@@ -4,11 +4,10 @@
  * Si aucun des deux ne s'initialise, `createWeaveScene` renvoie `null`
  * et le motif CSS (.weave) placé derrière le canvas reste visible.
  */
-import { MeshBasicNodeMaterial, QuadMesh, Vector2, WebGPURenderer } from 'three/webgpu';
+import { Color, MeshBasicNodeMaterial, QuadMesh, Vector2, WebGPURenderer } from 'three/webgpu';
 import {
   Fn,
   abs,
-  color,
   cos,
   exp,
   float,
@@ -45,6 +44,20 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
   const uCell = uniform(CELL_CSS_PX);
   const uRadius = uniform(GLOW_RADIUS_CSS_PX);
   const uGlow = uniform(0);
+
+  // Couleurs lues dans les variables CSS : elles suivent le thème clair / sombre.
+  const uBg = uniform(new Color());
+  const uStrand = uniform(new Color());
+  const uAccent = uniform(new Color());
+  const readTheme = () => {
+    const style = getComputedStyle(document.documentElement);
+    const read = (name: string, fallback: string) =>
+      style.getPropertyValue(name).trim() || fallback;
+    uBg.value.set(read('--color-bg', '#f4f8ff'));
+    uStrand.value.set(read('--weave-strand', '#d6e3f8'));
+    uAccent.value.set(read('--weave-glow', '#4f9bff'));
+  };
+  readTheme();
 
   const weave = Fn(() => {
     const px = uv().mul(uResolution);
@@ -104,12 +117,8 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     const d = px.sub(uMouse).length().div(uRadius);
     const glow = exp(d.mul(d).negate()).mul(uGlow);
 
-    const bg = color('#0B0B0D');
-    const strand = color('#26262B');
-    const accent = color('#FF5A36');
-
-    const base = mix(bg, strand, lum);
-    return mix(base, accent, glow.mul(lum).mul(0.55));
+    const base = mix(uBg, uStrand, lum);
+    return mix(base, uAccent, glow.mul(lum).mul(0.55));
   });
 
   const material = new MeshBasicNodeMaterial();
@@ -195,6 +204,15 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     if (!frame && !disposed) quad.render(renderer);
   });
 
+  const themeObserver = new MutationObserver(() => {
+    readTheme();
+    if (!frame && !disposed) quad.render(renderer);
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+
   resize();
   intersection.observe(canvas);
   resizeObserver.observe(canvas);
@@ -212,6 +230,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
       if (frame) cancelAnimationFrame(frame);
       intersection.disconnect();
       resizeObserver.disconnect();
+      themeObserver.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
       document.documentElement.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);

@@ -4,7 +4,8 @@ import displayFont from '@fontsource-variable/space-grotesk/files/space-grotesk-
 import textFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { site } from '../data/site';
+import { profile, site } from '../data/site';
+import { localeMeta, locales, switchLocalePath, toLocale, useTranslations } from '../i18n';
 import '../styles/global.css';
 
 interface Props {
@@ -12,16 +13,24 @@ interface Props {
   description?: string;
 }
 
-const { title, description = site.tagline } = Astro.props;
-const pageTitle = title ? `${title} — ${site.name}` : `${site.name} — ${site.titleParts[0]}`;
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const me = profile[locale];
+
+const { title, description = me.tagline } = Astro.props;
+const pageTitle = title ? `${title} — ${site.name}` : `${site.name} — ${me.titleParts[0]}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const alternates = locales.map((code) => ({
+  code,
+  href: new URL(switchLocalePath(Astro.url.pathname, code), Astro.site),
+}));
 
 const person = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: site.name,
-  jobTitle: site.titleParts[0],
-  description: site.tagline,
+  jobTitle: me.titleParts[0],
+  description: me.tagline,
   email: `mailto:${site.email}`,
   url: Astro.site?.href,
   address: { '@type': 'PostalAddress', addressLocality: 'Rennes', addressCountry: 'FR' },
@@ -34,19 +43,47 @@ const person = {
 ---
 
 <!doctype html>
-<html lang="fr" class="no-js">
+<html lang={locale} class="no-js">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0B0B0D" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#F4F8FF" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Thème appliqué avant le premier rendu : choix enregistré, sinon préférence système. -->
     <script is:inline>
-      document.documentElement.classList.replace('no-js', 'js');
+      (() => {
+        const prepare = (doc) => {
+          let theme = null;
+          try {
+            theme = localStorage.getItem('theme');
+          } catch {
+            /* stockage indisponible */
+          }
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          const root = doc.documentElement;
+          root.dataset.theme = theme;
+          root.classList.replace('no-js', 'js');
+          doc
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', theme === 'dark' ? '#070B18' : '#F4F8FF');
+        };
+        prepare(document);
+        if (!window.__themeReady) {
+          window.__themeReady = true;
+          document.addEventListener('astro:before-swap', (event) => prepare(event.newDocument));
+        }
+      })();
     </script>
 
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {alternates.map(({ code, href }) => (
+      <link rel="alternate" hreflang={code} href={href} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={alternates[0]?.href} />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
@@ -54,7 +91,12 @@ const person = {
     <link rel="preload" as="font" type="font/woff2" href={textFont} crossorigin />
 
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale" content={localeMeta[locale].og} />
+    {locales
+      .filter((code) => code !== locale)
+      .map((code) => (
+        <meta property="og:locale:alternate" content={localeMeta[code].og} />
+      ))}
     <meta property="og:site_name" content={site.name} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -66,7 +108,7 @@ const person = {
   </head>
   <body>
     <a href="#contenu" class="sr-only-focusable btn btn-primary fixed top-3 left-3 z-[60]">
-      Aller au contenu
+      {t('skip.content')}
     </a>
     <Nav />
     <main id="contenu">

@@ -1,5 +1,8 @@
 ---
-import { site } from '../data/site';
+import { profile, site } from '../data/site';
+import { toLocale } from '../i18n';
+
+const { location } = profile[toLocale(Astro.currentLocale)];
 const year = new Date().getFullYear();
 ---
 
@@ -9,6 +12,6 @@ const year = new Date().getFullYear();
     <p>
       © {year} {site.name}
     </p>
-    <p>{site.location}</p>
+    <p>{location}</p>
   </div>
 </footer>

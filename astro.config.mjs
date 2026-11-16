@@ -12,7 +12,16 @@ export default defineConfig({
   site,
   output: 'static',
   trailingSlash: 'ignore',
-  integrations: [react(), mdx(), sitemap()],
+  i18n: {
+    locales: ['fr', 'en'],
+    defaultLocale: 'fr',
+    routing: { prefixDefaultLocale: false },
+  },
+  integrations: [
+    react(),
+    mdx(),
+    sitemap({ i18n: { defaultLocale: 'fr', locales: { fr: 'fr-FR', en: 'en-US' } } }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },
