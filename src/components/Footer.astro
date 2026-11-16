@@ -1,0 +1,14 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="border-line border-t">
+  <div class="weave h-6 opacity-60" aria-hidden="true"></div>
+  <div class="container-page text-muted flex flex-col gap-2 py-8 font-mono text-xs tracking-wider uppercase sm:flex-row sm:items-center sm:justify-between">
+    <p>
+      © {year} {site.name}
+    </p>
+    <p>{site.location}</p>
+  </div>
+</footer>

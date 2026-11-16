@@ -1,0 +1,183 @@
+@import 'tailwindcss';
+
+@import '@fontsource-variable/space-grotesk/wght.css';
+@import '@fontsource-variable/inter/wght.css';
+@import '@fontsource-variable/jetbrains-mono/wght.css';
+
+/* ---------------------------------------------------------------
+   Tokens — direction artistique « tissage »
+   --------------------------------------------------------------- */
+@theme {
+  --color-*: initial;
+  --color-bg: #0b0b0d;
+  --color-fg: #f2f1ec;
+  --color-muted: #a3a29c;
+  --color-line: #26262b;
+  --color-card: #131316;
+  --color-accent: #ff5a36;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-display: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Une seule courbe (équivalent CSS de expo.out) et trois durées. */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 0.4s;
+  --duration-base: 0.8s;
+  --duration-slow: 1.2s;
+
+  --text-display: clamp(3.5rem, 15vw, 11.25rem);
+  --text-title: clamp(2.5rem, 8vw, 7rem);
+  --text-lead: clamp(1.125rem, 1.6vw, 1.5rem);
+
+  --tracking-display: -0.05em;
+}
+
+:root {
+  color-scheme: dark;
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --nav-h: 4.5rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: var(--nav-h);
+  }
+
+  body {
+    min-height: 100svh;
+    overflow-x: clip;
+    line-height: 1.6;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: var(--tracking-display);
+    line-height: 0.9;
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Étiquettes et numéros de section */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  /* Mot en contour seul */
+  .outline-text {
+    color: transparent;
+    -webkit-text-stroke: 0.012em var(--color-fg);
+  }
+
+  .container-page {
+    width: 100%;
+    max-width: 120rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Boutons — cible tactile ≥ 44 px */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-fg);
+    background: var(--color-bg);
+  }
+  .btn-primary {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+  .btn svg {
+    transition: transform var(--duration-fast) var(--ease-expo);
+  }
+  .btn:hover svg {
+    transform: translateX(4px);
+  }
+
+  /* Lien à soulignement animé (transform uniquement) */
+  .link {
+    position: relative;
+    display: inline-block;
+  }
+  .link::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -2px 0;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--duration-fast) var(--ease-expo);
+  }
+  .link:hover::after,
+  .link:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Motif tissé statique : repli CSS du shader et fil conducteur. */
+  .weave {
+    background-color: var(--color-bg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='68' height='68'%3E%3Cg transform='rotate(45 34 34)' fill='%23101013' stroke='%2326262B' stroke-width='1'%3E%3Crect x='-14' y='4' width='48' height='16' rx='1'/%3E%3Crect x='38' y='-14' width='16' height='48' rx='1'/%3E%3Crect x='4' y='34' width='16' height='48' rx='1'/%3E%3Crect x='34' y='38' width='48' height='16' rx='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 68px 68px;
+  }
+}
+
+.sr-only-focusable:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

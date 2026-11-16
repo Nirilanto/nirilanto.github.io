@@ -1,0 +1,136 @@
+---
+import Icon from './Icon.astro';
+import { nav, site } from '../data/site';
+---
+
+<header class="site-nav fixed inset-x-0 top-0 z-50" data-nav>
+  <div class="container-page flex h-(--nav-h) items-center justify-between gap-6">
+    <a
+      href="/"
+      class="font-display flex min-h-11 items-center text-lg font-bold tracking-tight"
+      aria-label={`${site.name} — accueil`}
+    >
+      <span>VN</span>
+      <span class="text-accent">.</span>
+    </a>
+
+    <nav aria-label="Navigation principale" class="hidden items-center gap-8 lg:flex">
+      <ul class="flex items-center gap-8">
+        {nav.map((item) => (
+          <li>
+            <a href={item.href} class="link nav-link flex min-h-11 items-center">
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href="/#contact" class="btn btn-primary" data-magnetic>
+        Me contacter
+      </a>
+    </nav>
+
+    <button
+      type="button"
+      class="flex size-11 items-center justify-center lg:hidden"
+      aria-expanded="false"
+      aria-controls="menu-mobile"
+      data-menu-toggle
+    >
+      <span class="sr-only" data-menu-label>
+        Ouvrir le menu
+      </span>
+      <span data-menu-icon="open">
+        <Icon name="menu" size={24} />
+      </span>
+      <span data-menu-icon="close" hidden>
+        <Icon name="close" size={24} />
+      </span>
+    </button>
+  </div>
+
+  <div id="menu-mobile" class="menu-mobile lg:hidden" hidden>
+    <nav aria-label="Navigation mobile" class="container-page flex h-full flex-col pt-6 pb-10">
+      <ul class="flex flex-col">
+        {nav.map((item, i) => (
+          <li class="border-line border-b">
+            <a href={item.href} class="flex min-h-16 items-baseline gap-4 py-4" data-menu-link>
+              <span class="label">{String(i + 1).padStart(2, '0')}</span>
+              <span class="font-display text-4xl font-bold tracking-tighter">{item.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href="/#contact" class="btn btn-primary mt-8 self-start" data-menu-link>
+        Me contacter
+      </a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-nav {
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-line);
+  }
+  .nav-link {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    transition: color var(--duration-fast) var(--ease-expo);
+  }
+  .nav-link:hover,
+  .nav-link:focus-visible {
+    color: var(--color-fg);
+  }
+  .nav-link::after {
+    bottom: 0.6rem;
+    background: var(--color-accent);
+  }
+  .menu-mobile {
+    position: fixed;
+    inset: var(--nav-h) 0 0 0;
+    background: var(--color-bg);
+    overflow-y: auto;
+  }
+</style>
+
+<script>
+  function initMenu() {
+    const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    const panel = document.getElementById('menu-mobile');
+    if (!toggle || !panel || toggle.dataset.ready) return;
+    toggle.dataset.ready = 'true';
+
+    const label = toggle.querySelector('[data-menu-label]');
+    const iconOpen = toggle.querySelector<HTMLElement>('[data-menu-icon="open"]');
+    const iconClose = toggle.querySelector<HTMLElement>('[data-menu-icon="close"]');
+
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+      if (label) label.textContent = open ? 'Fermer le menu' : 'Ouvrir le menu';
+      if (iconOpen) iconOpen.hidden = open;
+      if (iconClose) iconClose.hidden = !open;
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+    };
+
+    toggle.addEventListener('click', () =>
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true'),
+    );
+    panel
+      .querySelectorAll('[data-menu-link]')
+      .forEach((link) => link.addEventListener('click', () => setOpen(false)));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    window.matchMedia('(min-width: 64rem)').addEventListener('change', () => setOpen(false));
+  }
+
+  document.addEventListener('astro:page-load', initMenu);
+</script>
