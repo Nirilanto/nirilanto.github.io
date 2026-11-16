@@ -1,24 +1,29 @@
 /**
- * Scène du hero : motif tissé plein écran écrit en TSL.
- * WebGPURenderer utilise WebGPU si disponible, sinon WebGL 2.
- * Si aucun des deux ne s'initialise, `createWeaveScene` renvoie `null`
- * et le motif CSS (.weave) placé derrière le canvas reste visible.
+ * Scène du hero : de grands rubans de fils qui ondulent, se vrillent et se croisent
+ * — le « tissage » en mouvement. Écrit en TSL : WebGPU si disponible, sinon WebGL 2.
+ * Si aucun des deux ne s'initialise, `createWeaveScene` renvoie `null` et le tracé
+ * SVG statique placé derrière le texte reste seul.
+ *
+ * Le canvas est posé AU-DESSUS du texte avec un mode de fusion (multiply en clair,
+ * screen en sombre) : les rubans teintent la typographie comme du verre coloré,
+ * sans jamais la masquer. Le fond du shader est donc l'élément neutre de la fusion.
  */
 import { Color, MeshBasicNodeMaterial, QuadMesh, Vector2, WebGPURenderer } from 'three/webgpu';
+import type { Node } from 'three/webgpu';
 import {
   Fn,
   abs,
   cos,
   exp,
   float,
-  floor,
-  fract,
   mix,
   sin,
   smoothstep,
+  sqrt,
   uniform,
   uv,
   vec2,
+  vec3,
 } from 'three/tsl';
 
 export interface WeaveScene {
@@ -26,8 +31,78 @@ export interface WeaveScene {
 }
 
 const MAX_PIXEL_RATIO = 2;
-const CELL_CSS_PX = 34; // largeur d'un brin, en pixels CSS
-const GLOW_RADIUS_CSS_PX = 240;
+const REVEAL_SECONDS = 2.4;
+
+interface Ribbon {
+  angle: number; // direction du ruban (radians)
+  offset: number; // décalage perpendiculaire
+  amp: number; // amplitude de l'ondulation
+  freq: number;
+  speed: number;
+  phase: number;
+  width: number; // demi-largeur maximale
+  twist: number; // fréquence de vrille
+  threads: number; // nombre de fils
+}
+
+// Deux familles de directions qui se croisent : chaîne et trame.
+const RIBBONS: Ribbon[] = [
+  {
+    angle: -0.42,
+    offset: 0.02,
+    amp: 0.13,
+    freq: 1.5,
+    speed: 0.16,
+    phase: 0.0,
+    width: 0.13,
+    twist: 1.25,
+    threads: 15,
+  },
+  {
+    angle: 0.62,
+    offset: -0.06,
+    amp: 0.1,
+    freq: 1.9,
+    speed: -0.13,
+    phase: 2.1,
+    width: 0.085,
+    twist: 1.7,
+    threads: 11,
+  },
+  {
+    angle: -1.02,
+    offset: 0.3,
+    amp: 0.07,
+    freq: 2.3,
+    speed: 0.19,
+    phase: 4.2,
+    width: 0.055,
+    twist: 2.2,
+    threads: 7,
+  },
+  {
+    angle: 0.2,
+    offset: -0.3,
+    amp: 0.06,
+    freq: 2.7,
+    speed: 0.15,
+    phase: 1.3,
+    width: 0.04,
+    twist: 2.7,
+    threads: 5,
+  },
+  {
+    angle: 1.15,
+    offset: 0.52,
+    amp: 0.05,
+    freq: 2.1,
+    speed: -0.17,
+    phase: 5.5,
+    width: 0.03,
+    twist: 3.1,
+    threads: 5,
+  },
+];
 
 export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<WeaveScene | null> {
   let renderer: WebGPURenderer;
@@ -38,128 +113,166 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     return null;
   }
 
-  const uResolution = uniform(new Vector2(1, 1));
-  const uMouse = uniform(new Vector2(0, 0));
+  const uAspect = uniform(1);
+  const uPixel = uniform(0.001); // taille d'un pixel dans le repère de la scène
+  const uCenter = uniform(new Vector2(0.6, 0.42)); // foyer de la composition (UV)
+  const uMouse = uniform(new Vector2(0, 0)); // repère de la scène
   const uTime = uniform(0);
-  const uCell = uniform(CELL_CSS_PX);
-  const uRadius = uniform(GLOW_RADIUS_CSS_PX);
   const uGlow = uniform(0);
+  const uReveal = uniform(0);
+  const uCalm = uniform(new Vector2(0.7, 0.9)); // zone de texte courant : rubans atténués
 
   // Couleurs lues dans les variables CSS : elles suivent le thème clair / sombre.
-  const uBg = uniform(new Color());
-  const uStrand = uniform(new Color());
-  const uAccent = uniform(new Color());
+  const uBase = uniform(new Color());
+  const uFront = uniform(new Color());
+  const uBack = uniform(new Color());
+  const uShine = uniform(new Color());
   const readTheme = () => {
     const style = getComputedStyle(document.documentElement);
     const read = (name: string, fallback: string) =>
       style.getPropertyValue(name).trim() || fallback;
-    uBg.value.set(read('--color-bg', '#f4f8ff'));
-    uStrand.value.set(read('--weave-strand', '#d6e3f8'));
-    uAccent.value.set(read('--weave-glow', '#4f9bff'));
+    uBase.value.set(read('--ribbon-base', '#ffffff'));
+    uFront.value.set(read('--ribbon-front', '#8fbcff'));
+    uBack.value.set(read('--ribbon-back', '#1463e0'));
+    uShine.value.set(read('--ribbon-shine', '#dcebff'));
   };
   readTheme();
 
-  const weave = Fn(() => {
-    const px = uv().mul(uResolution);
+  const scene = Fn(() => {
+    // Repère centré sur le foyer, hauteur = 1, sans déformation.
+    const p0 = uv().sub(uCenter).mul(vec2(uAspect, 1));
 
-    // Grille tournée de 45° : le tissage se lit en diagonale, comme une tresse.
-    const grid = vec2(px.x.add(px.y), px.x.sub(px.y)).mul(0.7071).div(uCell);
+    // Lentille autour du curseur : les fils s'écartent comme sous une loupe.
+    const delta = p0.sub(uMouse);
+    const lens = exp(delta.dot(delta).div(0.045).negate()).mul(uGlow);
+    const p = p0.sub(delta.mul(lens).mul(0.32));
 
-    // Ondulation lente de la trame.
-    const wave = vec2(
-      sin(grid.y.mul(0.31).add(uTime.mul(0.32))),
-      cos(grid.x.mul(0.27).add(uTime.mul(0.26))),
-    ).mul(0.22);
-    const p = grid.add(wave);
+    let colour: Node<'vec3'> = vec3(0, 0, 0);
+    let alpha: Node<'float'> = float(0);
 
-    const cell = floor(p);
-    const f = fract(p);
+    for (const r of RIBBONS) {
+      const ca = Math.cos(r.angle);
+      const sa = Math.sin(r.angle);
+      const s = p.x.mul(ca).add(p.y.mul(sa)); // le long du ruban
+      const n = p.y.mul(ca).sub(p.x.mul(sa)); // en travers
 
-    // Armure toile : un brin sur deux passe dessus.
-    const parity = cell.x.add(cell.y).mod(2);
-    const along = mix(f.x, f.y, parity); // dans le sens du brin du dessus
-    const across = mix(f.y, f.x, parity); // en travers
+      // Ligne médiane : deux ondes superposées, et sa pente pour une vraie distance.
+      const ph1 = s.mul(r.freq).add(uTime.mul(r.speed)).add(r.phase);
+      const ph2 = s
+        .mul(r.freq * 0.47)
+        .add(uTime.mul(r.speed * 0.6))
+        .add(r.phase * 1.7);
+      const centre = sin(ph1)
+        .mul(r.amp)
+        .add(sin(ph2).mul(r.amp * 0.5))
+        .add(r.offset);
+      const slope = cos(ph1)
+        .mul(r.amp * r.freq)
+        .add(cos(ph2).mul(r.amp * 0.5 * r.freq * 0.47));
+      const d = n.sub(centre).div(sqrt(slope.mul(slope).add(1)));
 
-    const half = float(0.41);
-    const soft = float(0.05);
-    const dAcross = abs(across.sub(0.5));
-    const dAlong = abs(along.sub(0.5));
+      // Vrille : le ruban tourne sur lui-même, s'affine puis montre son envers.
+      const turn = cos(s.mul(r.twist).add(uTime.mul(0.11)).add(r.phase));
+      const open = abs(turn);
+      const halfWidth = open.mul(0.84).add(0.16).mul(r.width).mul(lens.mul(0.45).add(1));
 
-    const topMask = smoothstep(half, half.sub(soft), dAcross);
-    // Le brin s'arrondit : clair au centre, sombre là où il plonge sous le voisin.
-    const topShade = sin(along.mul(Math.PI)).mul(0.55).add(0.45);
-    // Fibres du raphia, dans le sens du brin.
-    const fibres = sin(across.mul(Math.PI * 8).add(cell.x.mul(1.7)))
-      .mul(0.07)
-      .add(0.93);
-    // Bords légèrement assombris pour donner du volume.
-    const bevel = smoothstep(half, half.sub(0.16), dAcross).mul(0.45).add(0.55);
+      const v = d.div(halfWidth);
+      const av = abs(v);
+      const edge = uPixel.div(halfWidth).mul(1.5);
+      const mask = smoothstep(float(1), float(1).sub(edge), av);
 
-    const underMask = smoothstep(half, half.sub(soft), dAlong).mul(topMask.oneMinus());
+      // Les fils : fines lignes parallèles, estompées là où le ruban se resserre.
+      const lines = smoothstep(
+        0.3,
+        0.92,
+        cos(v.mul(Math.PI * r.threads))
+          .mul(0.5)
+          .add(0.5),
+      );
+      const detail = smoothstep(0.22, 0.6, open);
+      const body = mix(float(0.42), mix(float(0.1), float(0.8), lines), detail);
+      const rim = smoothstep(0.82, 1, av).mul(0.35);
 
-    // Lente vague de lumière qui traverse le tissage.
-    const swell = sin(cell.x.mul(0.21).add(cell.y.mul(0.13)).add(uTime.mul(0.45)))
-      .mul(0.2)
-      .add(0.8);
+      // Apparition : les rubans se tissent d'un bord à l'autre.
+      const front = uReveal
+        .mul(4.4)
+        .sub(2.2)
+        .add(r.phase * 0.08);
+      const reveal = smoothstep(front, front.sub(0.5), s);
 
-    // La trame s'efface côté texte : la typographie garde la vedette.
-    const calm = smoothstep(0.1, 0.9, uv().x).mul(0.5).add(0.5);
+      const a = mask.mul(body.add(rim).min(1)).mul(reveal);
 
-    const lum = topMask
-      .mul(topShade)
-      .mul(fibres)
-      .mul(bevel)
-      .add(underMask.mul(0.22))
-      .mul(swell)
-      .mul(calm);
+      // Endroit / envers, et un reflet soyeux qui glisse le long du ruban.
+      const face = smoothstep(-0.25, 0.25, turn);
+      const sheenAt = sin(s.mul(2.6).add(uTime.mul(0.35)).add(r.phase)).mul(0.45);
+      const sheen = exp(v.sub(sheenAt).mul(v.sub(sheenAt)).mul(-9));
+      const tint = mix(
+        mix(uBack, uFront, face),
+        uShine,
+        sheen.mul(0.55).add(lens.mul(0.35)).min(1),
+      );
 
-    // Halo d'accent autour du curseur.
-    const d = px.sub(uMouse).length().div(uRadius);
-    const glow = exp(d.mul(d).negate()).mul(uGlow);
+      colour = mix(colour, tint, a);
+      alpha = alpha.add(a.mul(alpha.oneMinus()));
+    }
 
-    const base = mix(uBg, uStrand, lum);
-    return mix(base, uAccent, glow.mul(lum).mul(0.55));
+    // Sous le titre, les rubans s'effacent pour laisser lire le texte courant.
+    const calm = smoothstep(uCalm.x, uCalm.y, uv().y).mul(0.78).oneMinus();
+    return mix(uBase, colour, alpha.mul(calm));
   });
 
   const material = new MeshBasicNodeMaterial();
-  material.colorNode = weave();
+  material.colorNode = scene();
   const quad = new QuadMesh(material);
 
   // --- Dimensions -------------------------------------------------------
-  let pixelRatio = 1;
-  let width = 1;
-  let height = 1;
+  const hero = canvas.closest<HTMLElement>('[data-hero]');
+  let rect = canvas.getBoundingClientRect();
 
   const resize = () => {
-    const rect = canvas.getBoundingClientRect();
-    width = Math.max(1, Math.round(rect.width));
-    height = Math.max(1, Math.round(rect.height));
-    pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+    rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width));
+    const height = Math.max(1, Math.round(rect.height));
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
-    uResolution.value.set(width * pixelRatio, height * pixelRatio);
-    uCell.value = CELL_CSS_PX * pixelRatio;
-    uRadius.value = Math.min(GLOW_RADIUS_CSS_PX, Math.min(width, height) * 0.42) * pixelRatio;
+
+    const aspect = width / height;
+    uAspect.value = aspect;
+    uPixel.value = 1 / (height * pixelRatio);
+    // En paysage la composition penche à droite du titre ; en portrait elle le traverse.
+    uCenter.value.set(aspect > 1 ? 0.66 : 0.5, aspect > 1 ? 0.38 : 0.3);
+
+    const info = hero?.querySelector<HTMLElement>('[data-hero-info]');
+    if (info) {
+      const top = (info.getBoundingClientRect().top - rect.top) / height;
+      uCalm.value.set(top - 0.16, top + 0.06);
+    }
   };
 
   // --- Pointeur ---------------------------------------------------------
-  const target = new Vector2(0.5, 0.5); // coordonnées normalisées, origine en haut à gauche
-  const current = new Vector2(0.5, 0.5);
+  const target = new Vector2(0, 0);
+  const current = new Vector2(0, 0);
   let pointerActive = false;
 
   const onPointerMove = (event: PointerEvent) => {
     if (event.pointerType === 'touch') return;
-    const rect = canvas.getBoundingClientRect();
-    target.set((event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height);
-    pointerActive = true;
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    target.set((x - uCenter.value.x) * uAspect.value, y - uCenter.value.y);
+    pointerActive = y >= 0 && y <= 1;
   };
   const onPointerLeave = () => {
     pointerActive = false;
+  };
+  const onScroll = () => {
+    rect = canvas.getBoundingClientRect();
   };
 
   // --- Boucle de rendu, en pause hors écran et onglet inactif ------------
   let frame = 0;
   let last = 0;
+  let elapsed = 0;
   let inView = true;
   let disposed = false;
 
@@ -168,21 +281,16 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     if (disposed) return;
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
+    elapsed += dt;
     uTime.value += dt;
 
-    if (!pointerActive) {
-      // Sans curseur (tactile, souris absente), le halo dérive lentement.
-      const t = uTime.value;
-      target.set(0.5 + 0.32 * Math.sin(t * 0.21), 0.45 + 0.25 * Math.cos(t * 0.17));
-    }
-    const ease = 1 - Math.exp(-dt * 6);
-    current.lerp(target, ease);
-    // Halo plus discret quand il dérive seul que lorsqu'il suit le curseur.
-    const glowTarget = pointerActive ? 1 : 0.4;
-    uGlow.value += (glowTarget - uGlow.value) * (1 - Math.exp(-dt * 1.5));
+    // Apparition en expo.out, comme le reste du site.
+    const k = Math.min(elapsed / REVEAL_SECONDS, 1);
+    uReveal.value = k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
 
-    // Le repère UV du QuadMesh a son origine en haut à gauche, comme le pointeur.
-    uMouse.value.set(current.x * width * pixelRatio, current.y * height * pixelRatio);
+    current.lerp(target, 1 - Math.exp(-dt * 6));
+    uMouse.value.copy(current);
+    uGlow.value += ((pointerActive ? 1 : 0) - uGlow.value) * (1 - Math.exp(-dt * 3));
 
     quad.render(renderer);
     schedule();
@@ -203,7 +311,6 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     resize();
     if (!frame && !disposed) quad.render(renderer);
   });
-
   const themeObserver = new MutationObserver(() => {
     readTheme();
     if (!frame && !disposed) quad.render(renderer);
@@ -217,6 +324,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
   intersection.observe(canvas);
   resizeObserver.observe(canvas);
   window.addEventListener('pointermove', onPointerMove, { passive: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
   document.documentElement.addEventListener('pointerleave', onPointerLeave);
   document.addEventListener('visibilitychange', onVisibility);
 
@@ -232,6 +340,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
       resizeObserver.disconnect();
       themeObserver.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('scroll', onScroll);
       document.documentElement.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
       material.dispose();

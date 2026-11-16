@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import ThreadsStatic from './ThreadsStatic.astro';
 import WeaveCanvas from './webgl/WeaveCanvas.tsx';
 import { profile, site } from '../data/site';
 import { toLocale, useTranslations } from '../i18n';
@@ -15,9 +16,28 @@ const [role, ...specialities] = titleParts;
   aria-labelledby="hero-title"
   data-hero
 >
-  <div class="absolute inset-0 -z-10" aria-hidden="true">
-    <div class="weave absolute inset-0"></div>
+  <!-- Repli statique, derrière le texte. -->
+  <div class="hero-static text-accent absolute inset-0 -z-10" aria-hidden="true">
+    <ThreadsStatic />
+  </div>
+  <!-- Rubans animés, par-dessus le texte en mode fusion (verre teinté). -->
+  <div class="hero-glass" aria-hidden="true">
     <WeaveCanvas client:idle />
+  </div>
+
+  <!-- Sceau rotatif -->
+  <div class="hero-badge" aria-hidden="true" data-hero-fade>
+    <svg viewBox="0 0 160 160" class="hero-badge-ring">
+      <defs>
+        <path id="hero-badge-path" d="M80 80m-62 0a62 62 0 1 1 124 0a62 62 0 1 1 -124 0"></path>
+      </defs>
+      <text textLength="386" lengthAdjust="spacing">
+        <textPath href="#hero-badge-path">{t('hero.badge')}</textPath>
+      </text>
+    </svg>
+    <span class="hero-badge-core">
+      <Icon name="arrow-down" size={22} />
+    </span>
   </div>
 
   <div class="container-page pt-[calc(var(--nav-h)+2rem)] pb-10 md:pb-14">
@@ -29,12 +49,15 @@ const [role, ...specialities] = titleParts;
       <span class="hero-line block" aria-hidden="true" data-hero-line>
         {site.firstName}
       </span>
-      <span class="hero-line outline-text block" aria-hidden="true" data-hero-line>
+      <span class="hero-line outline-text block md:ml-[12vw]" aria-hidden="true" data-hero-line>
         {site.lastName}
       </span>
     </h1>
 
-    <div class="border-line mt-8 grid gap-8 border-t pt-8 md:mt-12 md:grid-cols-12 md:gap-10 md:pt-10">
+    <div
+      class="border-line mt-8 grid gap-8 border-t pt-8 md:mt-10 md:grid-cols-12 md:gap-10 md:pt-8"
+      data-hero-info
+    >
       <div class="md:col-span-5" data-hero-fade>
         <p class="font-display text-2xl leading-tight font-semibold tracking-tight md:text-3xl">
           {role}
@@ -66,6 +89,13 @@ const [role, ...specialities] = titleParts;
 </section>
 
 <style>
+  .hero-glass {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    mix-blend-mode: var(--ribbon-blend);
+  }
   .hero :global(.weave-canvas) {
     position: absolute;
     inset: 0;
@@ -78,9 +108,62 @@ const [role, ...specialities] = titleParts;
     opacity: 1;
   }
 
+  .hero-static :global(.threads-static) {
+    width: 100%;
+    height: 100%;
+    opacity: 0.4;
+    transition: opacity var(--duration-slow) var(--ease-expo);
+  }
+  /* Le tracé statique s'efface dès que le shader a pris le relais. */
+  .hero:has(:global(.weave-canvas[data-ready='true'])) :global(.threads-static) {
+    opacity: 0;
+  }
+
   .hero-line {
     /* Marge pour que le masque ne rogne pas le contour des lettres. */
     padding-block: 0.04em;
+  }
+
+  .hero-badge {
+    position: absolute;
+    top: calc(var(--nav-h) + 2.5rem);
+    right: var(--gutter);
+    display: none;
+    width: clamp(7.5rem, 11vw, 10rem);
+    aspect-ratio: 1;
+    color: var(--color-fg);
+  }
+  @media (min-width: 48rem) and (min-height: 40rem) {
+    .hero-badge {
+      display: grid;
+      place-items: center;
+    }
+  }
+  .hero-badge-ring {
+    position: absolute;
+    inset: 0;
+    animation: hero-badge-spin 28s linear infinite;
+  }
+  .hero-badge-ring text {
+    fill: currentColor;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .hero-badge-core {
+    display: grid;
+    place-items: center;
+    width: 42%;
+    aspect-ratio: 1;
+    border: 1px solid var(--color-line);
+    border-radius: 50%;
+    color: var(--color-accent);
+  }
+  @keyframes hero-badge-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* État initial avant l'animation d'entrée : uniquement si JS et mouvement autorisés.

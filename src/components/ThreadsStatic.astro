@@ -1,0 +1,54 @@
+---
+/**
+ * Version statique des rubans de fils, tracée en SVG à la compilation.
+ * Sert de repli quand le shader ne tourne pas (mouvement réduit, appareil modeste,
+ * pas de WebGL) et d'image d'attente pendant son chargement.
+ */
+const W = 1440;
+const H = 900;
+const STEP = 48;
+
+const ribbons = [
+  {
+    y0: 300,
+    tilt: -0.3,
+    amp: 110,
+    freq: 0.0042,
+    phase: 0.4,
+    width: 96,
+    twist: 0.0031,
+    threads: 11,
+  },
+  { y0: 120, tilt: 0.42, amp: 80, freq: 0.0055, phase: 2.2, width: 60, twist: 0.0044, threads: 8 },
+  { y0: 760, tilt: -0.62, amp: 60, freq: 0.006, phase: 4.1, width: 38, twist: 0.0052, threads: 6 },
+];
+
+const paths = ribbons.flatMap((r) =>
+  Array.from({ length: r.threads }, (_, k) => {
+    const v = (k / (r.threads - 1)) * 2 - 1;
+    const points: string[] = [];
+    for (let x = -STEP; x <= W + STEP; x += STEP) {
+      const centre = r.y0 + r.tilt * (x - W / 2) + r.amp * Math.sin(x * r.freq + r.phase);
+      const open = 0.16 + 0.84 * Math.abs(Math.cos(x * r.twist + r.phase));
+      points.push(`${x} ${Math.round(centre + v * r.width * open)}`);
+    }
+    return `M${points.join('L')}`;
+  }),
+);
+---
+
+<svg
+  class="threads-static"
+  viewBox={`0 0 ${W} ${H}`}
+  preserveAspectRatio="xMidYMid slice"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  {paths.map((d) => (
+    <path d={d} vector-effect="non-scaling-stroke" />
+  ))}
+</svg>
