@@ -15,6 +15,8 @@ export default defineConfig(
         document: 'readonly',
         navigator: 'readonly',
         process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
       },
     },
   },
