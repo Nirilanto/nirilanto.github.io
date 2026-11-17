@@ -91,18 +91,21 @@ const contact = localePath(locale, '/#contact');
 </div>
 
 <style>
-  .site-nav {
+  /* Transparent en haut de page ; le fond dépoli n'apparaît qu'une fois la page défilée. */
+  .site-nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background: color-mix(in srgb, var(--color-bg) 82%, transparent);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-line);
-    /* Masqué en haut de page : il glisse dans l'écran dès qu'on défile. */
-    transform: translateY(-100%);
-    transition: transform var(--duration-base) var(--ease-expo);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-expo);
   }
-  :global(html.scrolled) .site-nav,
-  :global(html.no-js) .site-nav,
-  .site-nav:focus-within {
-    transform: translateY(0);
+  :global(html.scrolled) .site-nav::before,
+  :global(html.no-js) .site-nav::before {
+    opacity: 1;
   }
   .nav-link {
     font-family: var(--font-mono);
@@ -164,7 +167,7 @@ const contact = localePath(locale, '/#contact');
     window.matchMedia('(min-width: 64rem)').addEventListener('change', () => setOpen(false));
   }
 
-  // En-tête visible seulement une fois la page défilée.
+  // Fond de l'en-tête : seulement une fois la page défilée.
   const syncScrolled = () =>
     document.documentElement.classList.toggle('scrolled', window.scrollY > 24);
   window.addEventListener('scroll', syncScrolled, { passive: true });

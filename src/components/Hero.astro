@@ -122,19 +122,22 @@ const statementText = copy.statement.map((part) => part.text).join('');
           </a>
         </div>
       </div>
+    </div>
 
-      <ul class="hero-pillars">
-        {copy.pillars.map((pillar, i) => (
-          <li class="hero-pillar" data-hero-fade>
-            <span class="hero-pillar-icon">
+    <!-- Trois piliers : pastilles de verre flottant en cascade devant le portrait. -->
+    <ul class="hero-chips">
+      {copy.pillars.map((pillar, i) => (
+        <li class={`hero-chip-slot hero-chip-slot-${i + 1}`} data-hero-fade>
+          <span class="hero-chip">
+            <span class="hero-chip-icon">
               <Icon name={pillar.icon} size={20} />
             </span>
-            <span class="hero-pillar-index">{String(i + 1).padStart(2, '0')}</span>
-            <span class="hero-pillar-label">{pillar.label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+            <span class="hero-chip-index">{String(i + 1).padStart(2, '0')}</span>
+            <span class="hero-chip-label">{pillar.label}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
   </div>
 </section>
 
@@ -142,10 +145,10 @@ const statementText = copy.statement.map((part) => part.text).join('');
   /* Mobile : titre, portrait, texte. Bureau : texte à gauche, portrait debout à droite. */
   .hero-grid {
     display: grid;
-    grid-template-areas: 'head' 'figure' 'info';
+    grid-template-areas: 'head' 'figure' 'info' 'chips';
     row-gap: 2rem;
     min-height: 100svh;
-    padding-top: clamp(2rem, 6svh, 4rem); /* l'en-tête est masqué en haut de page */
+    padding-top: calc(var(--nav-h) + 1rem);
   }
   .hero-head {
     grid-area: head;
@@ -178,7 +181,7 @@ const statementText = copy.statement.map((part) => part.text).join('');
       row-gap: 2.5rem;
     }
     .hero-head {
-      padding-top: clamp(0.5rem, 4svh, 3rem);
+      padding-top: clamp(0.25rem, 2svh, 1.5rem);
     }
     .hero-info {
       align-self: center;
@@ -269,47 +272,96 @@ const statementText = copy.statement.map((part) => part.text).join('');
     position: relative;
   }
 
-  /* Trois piliers */
-  .hero-pillars {
+  /* Trois piliers : pastilles de verre */
+  .hero-chips {
+    grid-area: chips;
     display: grid;
     gap: 0.5rem;
+    padding-bottom: 2.5rem;
   }
-  @media (min-width: 40rem) {
-    .hero-pillars {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      max-width: 46rem;
-    }
-  }
-  .hero-pillar {
+  .hero-chip {
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr);
     align-items: center;
     gap: 0.75rem;
-    padding: 0.6rem 0.9rem 0.6rem 0.6rem;
-    border: 1px solid var(--color-line);
-    border-radius: 0.9rem;
-    background: color-mix(in srgb, var(--color-card) 78%, transparent);
+    padding: 0.55rem 1rem 0.55rem 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-line));
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--color-card) 72%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--color-accent) 70%, transparent);
   }
-  .hero-pillar-icon {
+  .hero-chip-icon {
     display: grid;
     place-items: center;
     width: 2.25rem;
     height: 2.25rem;
-    border-radius: 0.6rem;
-    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-    color: var(--color-accent);
+    border-radius: 0.65rem;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
   }
-  .hero-pillar-index {
+  .hero-chip-index {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     color: var(--color-muted);
   }
-  .hero-pillar-label {
+  .hero-chip-label {
     font-family: var(--font-display);
     font-size: 0.9375rem;
     font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.15;
+    white-space: nowrap;
+  }
+  @media (min-width: 64rem) {
+    /* Même cadre que le portrait, par-dessus lui. */
+    .hero-chips {
+      grid-area: figure;
+      position: relative;
+      z-index: 12;
+      display: block;
+      align-self: end;
+      justify-self: end;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      max-height: calc(100svh - var(--nav-h) - 1rem);
+      padding: 0;
+      pointer-events: none;
+    }
+    .hero-chip-slot {
+      position: absolute;
+    }
+    .hero-chip-slot-1 {
+      left: -20%;
+      top: 47%;
+    }
+    .hero-chip-slot-2 {
+      left: -7%;
+      top: 61%;
+    }
+    .hero-chip-slot-3 {
+      left: -26%;
+      top: 75%;
+    }
+    .hero-chip {
+      animation: hero-float 7s ease-in-out infinite;
+    }
+    .hero-chip-slot-1 .hero-chip {
+      rotate: -3deg;
+    }
+    .hero-chip-slot-2 .hero-chip {
+      rotate: 2.5deg;
+      animation-delay: -2.3s;
+    }
+    .hero-chip-slot-3 .hero-chip {
+      rotate: -1.5deg;
+      animation-delay: -4.6s;
+    }
+  }
+  @keyframes hero-float {
+    50% {
+      transform: translateY(-9px);
+    }
   }
 
   /* Portrait posé sur le bas du hero, sans panneau derrière. */
@@ -324,7 +376,7 @@ const statementText = copy.statement.map((part) => part.text).join('');
   @media (min-width: 64rem) {
     .hero-figure {
       width: 100%;
-      max-height: calc(100svh - 3rem);
+      max-height: calc(100svh - var(--nav-h) - 1rem);
     }
   }
   .hero-figure :global(.hero-portrait) {
@@ -405,6 +457,14 @@ const statementText = copy.statement.map((part) => part.text).join('');
     border-radius: 50%;
     background: var(--color-bg);
     color: var(--color-fg);
+  }
+  @media (min-width: 64rem) {
+    .hero-badge {
+      left: auto;
+      right: -1rem;
+      bottom: auto;
+      top: 4%;
+    }
   }
   .hero-badge-ring {
     position: absolute;
