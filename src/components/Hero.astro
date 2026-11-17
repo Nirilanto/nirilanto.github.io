@@ -1,6 +1,7 @@
 ---
 import { Picture } from 'astro:assets';
 import portrait from '../assets/venerand-detoure.png';
+import portraitNight from '../assets/venerand.jpeg';
 import Icon from './Icon.astro';
 import ThreadsStatic from './ThreadsStatic.astro';
 import WeaveCanvas from './webgl/WeaveCanvas.tsx';
@@ -52,6 +53,18 @@ const [role, ...specialities] = titleParts;
         class="hero-portrait"
         data-hero-portrait
       />
+      <!-- Thème sombre : portrait sur fond noir, cadré dans l'arche -->
+      <div class="hero-night" data-hero-portrait>
+        <Picture
+          src={portraitNight}
+          alt={t('hero.portraitAlt')}
+          formats={['avif', 'webp']}
+          widths={[360, 540, 720, 1080]}
+          sizes="(min-width: 64rem) 34vw, 72vw"
+          loading="lazy"
+          class="hero-night-img"
+        />
+      </div>
       <!-- Sceau rotatif -->
       <div class="hero-badge" aria-hidden="true" data-hero-fade>
         <svg viewBox="0 0 160 160" class="hero-badge-ring">
@@ -174,6 +187,37 @@ const [role, ...specialities] = titleParts;
     object-position: 50% 100%;
   }
 
+  /* Thème sombre : la photo sur fond noir remplit l'arche ; un voile bleu nuit en mode
+     « lighten » teinte le noir du fond sans toucher au visage. */
+  .hero-night {
+    display: none;
+    position: absolute;
+    inset: 6% 4% 0 4%;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 999px 999px 0 0;
+  }
+  .hero-night::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--portrait-night-tint);
+    mix-blend-mode: lighten;
+  }
+  .hero-night :global(.hero-night-img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0%;
+  }
+  :global([data-theme='dark']) .hero-night {
+    display: block;
+  }
+  :global([data-theme='dark']) .hero-arch,
+  :global([data-theme='dark']) .hero-figure :global(.hero-portrait) {
+    display: none;
+  }
+
   .hero-glass {
     position: absolute;
     inset: 0;
@@ -291,7 +335,7 @@ const [role, ...specialities] = titleParts;
     gsap.set(split.chars, { yPercent: 115, rotate: 9, transformOrigin: '0% 100%' });
     gsap.set(fades, { y: 24, opacity: 0 });
     const arch = hero.querySelector('[data-hero-arch]');
-    const photo = hero.querySelector('[data-hero-portrait]');
+    const photo = hero.querySelectorAll('[data-hero-portrait]');
     gsap.set(arch, { scaleY: 0 });
     gsap.set(photo, { yPercent: 6, opacity: 0 });
     hero.dataset.heroReady = 'true';
