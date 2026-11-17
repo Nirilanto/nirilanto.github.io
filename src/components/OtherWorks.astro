@@ -8,7 +8,7 @@ const t = useTranslations(locale);
 const projects = await getOtherProjects(locale);
 ---
 
-<section class="section container-page" aria-labelledby="autres-title">
+<section id="autres" class="section container-page" aria-labelledby="autres-title">
   <SectionHeading
     index="02"
     label={`${t('others.title')} ${t('others.titleOutline')}`}

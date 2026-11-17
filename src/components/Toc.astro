@@ -1,0 +1,161 @@
+---
+import { nav } from '../data/site';
+import { localePath, toLocale, useTranslations } from '../i18n';
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+// Mêmes numéros que les en-têtes de section.
+const [projects, ...rest] = nav.map((item) => ({ label: t(item.key), hash: item.hash }));
+const items = [
+  { label: t('nav.top'), hash: '#accueil' },
+  ...(projects ? [projects] : []),
+  { label: `${t('others.title')} ${t('others.titleOutline')}`, hash: '#autres' },
+  ...rest,
+  { label: t('contact.label'), hash: '#contact' },
+].map((item, i) => ({
+  ...item,
+  index: String(i).padStart(2, '0'),
+  href: localePath(locale, `/${item.hash}`),
+}));
+---
+
+<!-- Sommaire latéral : repère de lecture sur grand écran, le menu suffit en dessous. -->
+<nav class="toc" aria-label={t('nav.toc')} data-toc>
+  <ol>
+    {items.map((item) => (
+      <li>
+        <a href={item.href} class="toc-link" data-toc-link={item.hash.slice(1)}>
+          <span class="toc-text">
+            <span class="toc-index">{item.index}</span>
+            {item.label}
+          </span>
+          <span class="toc-tick" aria-hidden="true" />
+        </a>
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  .toc {
+    display: none;
+  }
+  @media (min-width: 64rem) {
+    .toc {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      z-index: 45;
+      display: block;
+      transform: translateY(-50%);
+    }
+  }
+  .toc-link {
+    display: flex;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.625rem;
+    padding-right: 0.875rem;
+    padding-left: 0.5rem;
+    color: var(--color-muted);
+  }
+  .toc-tick {
+    width: 1.75rem;
+    height: 2px;
+    flex: none;
+    background: currentColor;
+    opacity: 0.45;
+    transform: scaleX(0.45);
+    transform-origin: right;
+    transition:
+      transform var(--duration-fast) var(--ease-expo),
+      opacity var(--duration-fast) var(--ease-expo);
+  }
+  .toc-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.625rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-fg);
+    opacity: 0;
+    transform: translateX(0.5rem);
+    transition:
+      transform var(--duration-fast) var(--ease-expo),
+      opacity var(--duration-fast) var(--ease-expo);
+  }
+  .toc-index {
+    color: var(--color-accent);
+  }
+  .toc-link:hover .toc-tick,
+  .toc-link:focus-visible .toc-tick,
+  .toc-link[aria-current] .toc-tick {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  .toc-link[aria-current] {
+    color: var(--color-accent);
+  }
+  .toc-link:hover .toc-text,
+  .toc-link:focus-visible .toc-text,
+  .toc-link[aria-current]:not([data-toc-link='accueil']) .toc-text {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .toc-tick,
+    .toc-text {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  let links: HTMLAnchorElement[] = [];
+  let sections: HTMLElement[] = [];
+  let queued = false;
+
+  function sync() {
+    queued = false;
+    // Section courante : la dernière dont le haut a passé le tiers supérieur de l'écran.
+    const line = window.innerHeight * 0.35;
+    let current = 0;
+    sections.forEach((section, i) => {
+      if (section.getBoundingClientRect().top <= line) current = i;
+    });
+    const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atEnd) current = sections.length - 1;
+    links.forEach((link, i) => {
+      if (i === current) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+  }
+
+  function request() {
+    if (queued || !links.length) return;
+    queued = true;
+    requestAnimationFrame(sync);
+  }
+
+  window.addEventListener('scroll', request, { passive: true });
+  window.addEventListener('resize', request, { passive: true });
+
+  document.addEventListener('astro:page-load', () => {
+    const all = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+    const pairs = all
+      .map((link) => ({ link, section: document.getElementById(link.dataset.tocLink ?? '') }))
+      .filter((pair): pair is { link: HTMLAnchorElement; section: HTMLElement } => !!pair.section);
+    links = pairs.map((pair) => pair.link);
+    sections = pairs.map((pair) => pair.section);
+    sync();
+  });
+</script>

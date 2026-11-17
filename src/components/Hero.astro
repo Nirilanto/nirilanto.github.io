@@ -16,7 +16,12 @@ const copy = heroCopy[locale];
 const statementText = copy.statement.map((part) => part.text).join('');
 ---
 
-<section class="hero bg-bg relative isolate overflow-clip" aria-labelledby="hero-title" data-hero>
+<section
+  id="accueil"
+  class="hero bg-bg relative isolate overflow-clip"
+  aria-labelledby="hero-title"
+  data-hero
+>
   <!-- Repli statique, derrière le texte. -->
   <div class="hero-static text-accent absolute inset-0 -z-10" aria-hidden="true">
     <ThreadsStatic />
