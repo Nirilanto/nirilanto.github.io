@@ -122,6 +122,10 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
   const uReveal = uniform(0);
   const uCalm = uniform(new Vector2(0.7, 0.9)); // zone de texte courant : rubans atténués
 
+  // Zone du portrait (x0, y0, x1, y1 en UV) : les rubans s'y font discrets.
+  const uBoxMin = uniform(new Vector2(2, 2));
+  const uBoxMax = uniform(new Vector2(3, 3));
+
   // Couleurs lues dans les variables CSS : elles suivent le thème clair / sombre.
   const uBase = uniform(new Color());
   const uFront = uniform(new Color());
@@ -218,7 +222,14 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
 
     // Sous le titre, les rubans s'effacent pour laisser lire le texte courant.
     const calm = smoothstep(uCalm.x, uCalm.y, uv().y).mul(0.78).oneMinus();
-    return mix(uBase, colour, alpha.mul(calm));
+    const u = uv();
+    const soft = float(0.05);
+    const inBox = smoothstep(uBoxMin.x.sub(soft), uBoxMin.x.add(soft), u.x)
+      .mul(smoothstep(uBoxMax.x.add(soft), uBoxMax.x.sub(soft), u.x))
+      .mul(smoothstep(uBoxMin.y.sub(soft), uBoxMin.y.add(soft), u.y))
+      .mul(smoothstep(uBoxMax.y.add(soft), uBoxMax.y.sub(soft), u.y));
+    const quiet = inBox.mul(0.94).oneMinus();
+    return mix(uBase, colour, alpha.mul(calm).mul(quiet));
   });
 
   const material = new MeshBasicNodeMaterial();
@@ -241,12 +252,18 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     uAspect.value = aspect;
     uPixel.value = 1 / (height * pixelRatio);
     // En paysage la composition penche à droite du titre ; en portrait elle le traverse.
-    uCenter.value.set(aspect > 1 ? 0.66 : 0.5, aspect > 1 ? 0.38 : 0.3);
+    uCenter.value.set(aspect > 1 ? 0.5 : 0.5, aspect > 1 ? 0.4 : 0.3);
 
     const info = hero?.querySelector<HTMLElement>('[data-hero-info]');
     if (info) {
       const top = (info.getBoundingClientRect().top - rect.top) / height;
       uCalm.value.set(top - 0.16, top + 0.06);
+    }
+    const figure = hero?.querySelector<HTMLElement>('[data-hero-figure]');
+    if (figure) {
+      const box = figure.getBoundingClientRect();
+      uBoxMin.value.set((box.left - rect.left) / width, (box.top - rect.top) / height);
+      uBoxMax.value.set((box.right - rect.left) / width, (box.bottom - rect.top) / height);
     }
   };
 
@@ -272,7 +289,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
   // --- Boucle de rendu, en pause hors écran et onglet inactif ------------
   let frame = 0;
   let last = 0;
-  let elapsed = 0;
+  let revealStart = 0;
   let inView = true;
   let disposed = false;
 
@@ -281,11 +298,12 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     if (disposed) return;
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
-    elapsed += dt;
     uTime.value += dt;
 
     // Apparition en expo.out, comme le reste du site.
-    const k = Math.min(elapsed / REVEAL_SECONDS, 1);
+    // Calée sur l'horloge réelle : même si l'appareil peine, l'apparition ne traîne pas.
+    if (!revealStart) revealStart = now;
+    const k = Math.min((now - revealStart) / 1000 / REVEAL_SECONDS, 1);
     uReveal.value = k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
 
     current.lerp(target, 1 - Math.exp(-dt * 6));
@@ -323,6 +341,14 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
   resize();
   intersection.observe(canvas);
   resizeObserver.observe(canvas);
+  // Les zones calmes dépendent de la mise en page : on les remesure quand elle bouge
+  // (polices chargées, image du portrait, changement de point de rupture).
+  hero
+    ?.querySelectorAll<HTMLElement>('[data-hero-figure], [data-hero-info]')
+    .forEach((element) => resizeObserver.observe(element));
+  void document.fonts.ready.then(() => {
+    if (!disposed) resize();
+  });
   window.addEventListener('pointermove', onPointerMove, { passive: true });
   window.addEventListener('scroll', onScroll, { passive: true });
   document.documentElement.addEventListener('pointerleave', onPointerLeave);

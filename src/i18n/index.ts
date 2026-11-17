@@ -49,6 +49,7 @@ const ui = {
     'theme.toDark': 'Passer au thème sombre',
     'hero.label': 'Portfolio',
     'hero.projects': 'Voir les projets',
+    'hero.portraitAlt': 'Portrait de Venerand Nirilanto',
     'hero.badge': 'Web • Mobile • Architecture • IA • ',
   },
   en: {
@@ -68,6 +69,7 @@ const ui = {
     'theme.toDark': 'Switch to dark theme',
     'hero.label': 'Portfolio',
     'hero.projects': 'View projects',
+    'hero.portraitAlt': 'Portrait of Venerand Nirilanto',
     'hero.badge': 'Web • Mobile • Architecture • AI • ',
   },
 } as const satisfies Record<Locale, Record<string, string>>;
