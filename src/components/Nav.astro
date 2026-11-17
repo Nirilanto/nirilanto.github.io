@@ -95,6 +95,14 @@ const contact = localePath(locale, '/#contact');
     background: color-mix(in srgb, var(--color-bg) 82%, transparent);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-line);
+    /* Masqué en haut de page : il glisse dans l'écran dès qu'on défile. */
+    transform: translateY(-100%);
+    transition: transform var(--duration-base) var(--ease-expo);
+  }
+  :global(html.scrolled) .site-nav,
+  :global(html.no-js) .site-nav,
+  .site-nav:focus-within {
+    transform: translateY(0);
   }
   .nav-link {
     font-family: var(--font-mono);
@@ -156,5 +164,13 @@ const contact = localePath(locale, '/#contact');
     window.matchMedia('(min-width: 64rem)').addEventListener('change', () => setOpen(false));
   }
 
-  document.addEventListener('astro:page-load', initMenu);
+  // En-tête visible seulement une fois la page défilée.
+  const syncScrolled = () =>
+    document.documentElement.classList.toggle('scrolled', window.scrollY > 24);
+  window.addEventListener('scroll', syncScrolled, { passive: true });
+
+  document.addEventListener('astro:page-load', () => {
+    initMenu();
+    syncScrolled();
+  });
 </script>

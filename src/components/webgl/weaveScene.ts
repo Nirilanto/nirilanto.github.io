@@ -224,7 +224,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     }
 
     // Sous le titre, les rubans s'effacent pour laisser lire le texte courant.
-    const calm = smoothstep(uCalm.x, uCalm.y, uv().y).mul(0.78).oneMinus();
+    const calm = smoothstep(uCalm.x, uCalm.y, uv().y).mul(0.62).oneMinus();
     const u = uv();
     // Photo non détourée (thème sombre) : zone calme en ellipse serrée sur la silhouette.
     const centre = uBoxMin.add(uBoxMax).mul(0.5);
