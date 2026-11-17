@@ -1,0 +1,55 @@
+---
+import SectionHeading from './SectionHeading.astro';
+import { about } from '../data/about';
+import { toLocale, useTranslations } from '../i18n';
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const { education } = about[locale];
+---
+
+<section id="formation" class="section container-page" aria-labelledby="formation-title">
+  <SectionHeading
+    index="05"
+    label={t('nav.education')}
+    title={t('education.title')}
+    outline={t('education.titleOutline')}
+    joined
+    id="formation-title"
+  />
+
+  <div class="edu">
+    <div data-reveal>
+      <h3 class="edu-school">{education.school}</h3>
+      <p class="text-muted mt-3 font-mono text-xs tracking-wider uppercase">{education.place}</p>
+      <p class="text-lead mt-5">{education.field}</p>
+    </div>
+    <ul class="border-line border-t">
+      {education.degrees.map((degree) => (
+        <li class="border-line flex items-baseline justify-between gap-6 border-b py-5" data-reveal>
+          <span class="font-display text-xl font-semibold tracking-tight md:text-2xl">
+            {degree.name}
+          </span>
+          <span class="label">{degree.year}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .edu {
+    display: grid;
+    gap: 2.5rem;
+  }
+  .edu-school {
+    font-size: clamp(1.75rem, 3.6vw, 3rem);
+    line-height: 1.05;
+  }
+  @media (min-width: 64rem) {
+    .edu {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(3rem, 6vw, 7rem);
+    }
+  }
+</style>

@@ -1,0 +1,33 @@
+---
+/** Grande ligne de texte qui glisse horizontalement avec le défilement. */
+import { toLocale, useTranslations } from '../i18n';
+
+const t = useTranslations(toLocale(Astro.currentLocale));
+const text = t('marquee');
+---
+
+<div class="marquee border-line border-y" aria-hidden="true" data-marquee>
+  <p class="marquee-track" data-marquee-track>
+    {[0, 1, 2, 3].map((i) => (
+      <span class:list={[i % 2 === 1 && 'outline-text']}>{text}&nbsp;</span>
+    ))}
+  </p>
+</div>
+
+<style>
+  .marquee {
+    overflow: hidden;
+    padding-block: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 9vw, 9rem);
+    font-weight: 700;
+    letter-spacing: var(--tracking-display);
+    line-height: 1;
+    white-space: nowrap;
+    will-change: transform;
+  }
+</style>

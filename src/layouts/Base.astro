@@ -110,10 +110,14 @@ const person = {
     <a href="#contenu" class="sr-only-focusable btn btn-primary fixed top-3 left-3 z-[60]">
       {t('skip.content')}
     </a>
+    <div class="progress" aria-hidden="true" data-progress></div>
     <Nav />
     <main id="contenu">
       <slot />
     </main>
     <Footer />
+    <script>
+      import '../scripts/scroll';
+    </script>
   </body>
 </html>

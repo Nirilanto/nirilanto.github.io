@@ -1,0 +1,65 @@
+---
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+import { toLocale, useTranslations } from '../i18n';
+
+const t = useTranslations(toLocale(Astro.currentLocale));
+---
+
+<section id="contact" class="section container-page" aria-labelledby="contact-title">
+  <p class="label" data-reveal>
+    06 — {t('contact.label')}
+  </p>
+  <h2
+    id="contact-title"
+    class="contact-title mt-4"
+    aria-label={`${t('contact.title')} ${t('contact.titleOutline')}`}
+    data-reveal-lines
+  >
+    <span aria-hidden="true">{t('contact.title')}</span>{' '}
+    <span class="outline-text" aria-hidden="true">
+      {t('contact.titleOutline')}
+    </span>
+  </h2>
+
+  <a href={`mailto:${site.email}`} class="contact-mail link mt-10" data-reveal>
+    {site.email}
+  </a>
+
+  <div class="mt-10 flex flex-wrap items-center gap-3" data-reveal>
+    <a href={`mailto:${site.email}`} class="btn btn-primary" data-magnetic>
+      <Icon name="mail" />
+      {t('contact.email')}
+    </a>
+    <a href={site.linkedin} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
+      LinkedIn
+      <Icon name="arrow-up-right" />
+    </a>
+    {site.github ? (
+      <a href={site.github} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
+        GitHub
+        <Icon name="arrow-up-right" />
+      </a>
+    ) : (
+      <span class="placeholder-text">{t('contact.github')}</span>
+    )}
+  </div>
+</section>
+
+<style>
+  .contact-title {
+    font-size: clamp(3rem, 11vw, 11rem);
+    line-height: 0.95;
+  }
+  .contact-mail {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 4vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+  }
+  .contact-mail::after {
+    background: var(--color-accent);
+    height: 2px;
+  }
+</style>

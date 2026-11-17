@@ -1,0 +1,31 @@
+---
+/** En-tête de section : numéro en mono, titre géant dont une partie en contour seul. */
+interface Props {
+  index: string;
+  label: string;
+  title: string;
+  outline: string;
+  /** Colle les deux parties (mot coupé en deux) au lieu de les séparer par une espace. */
+  joined?: boolean;
+  id: string;
+}
+const { index, label, title, outline, joined = false, id } = Astro.props;
+---
+
+<header class="mb-10 md:mb-16">
+  <p class="label" data-reveal>
+    {index} — {label}
+  </p>
+  <h2
+    id={id}
+    class="section-title mt-4"
+    aria-label={joined ? `${title}${outline}` : `${title} ${outline}`}
+    data-reveal-lines
+  >
+    <span aria-hidden="true">{title}</span>
+    {joined ? '' : ' '}
+    <span class="outline-text" aria-hidden="true">
+      {outline}
+    </span>
+  </h2>
+</header>

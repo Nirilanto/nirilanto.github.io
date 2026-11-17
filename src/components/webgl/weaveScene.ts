@@ -16,6 +16,7 @@ import {
   cos,
   exp,
   float,
+  length,
   mix,
   sin,
   smoothstep,
@@ -223,12 +224,11 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     // Sous le titre, les rubans s'effacent pour laisser lire le texte courant.
     const calm = smoothstep(uCalm.x, uCalm.y, uv().y).mul(0.78).oneMinus();
     const u = uv();
-    const soft = float(0.05);
-    const inBox = smoothstep(uBoxMin.x.sub(soft), uBoxMin.x.add(soft), u.x)
-      .mul(smoothstep(uBoxMax.x.add(soft), uBoxMax.x.sub(soft), u.x))
-      .mul(smoothstep(uBoxMin.y.sub(soft), uBoxMin.y.add(soft), u.y))
-      .mul(smoothstep(uBoxMax.y.add(soft), uBoxMax.y.sub(soft), u.y));
-    const quiet = inBox.mul(0.94).oneMinus();
+    // Autour du portrait : zone calme en ellipse, sans bord droit visible.
+    const centre = uBoxMin.add(uBoxMax).mul(0.5);
+    const half = uBoxMax.sub(uBoxMin).mul(0.5);
+    const inBox = smoothstep(0.92, 1.42, length(u.sub(centre).div(half))).oneMinus();
+    const quiet = inBox.oneMinus();
     return mix(uBase, colour, alpha.mul(calm).mul(quiet));
   });
 

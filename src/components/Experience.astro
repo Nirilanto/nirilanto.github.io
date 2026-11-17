@@ -1,0 +1,89 @@
+---
+import SectionHeading from './SectionHeading.astro';
+import { getExperiences } from '../lib/content';
+import { toLocale, useTranslations } from '../i18n';
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const jobs = await getExperiences(locale);
+---
+
+<section id="experience" class="section container-page" aria-labelledby="experience-title">
+  <SectionHeading
+    index="04"
+    label={t('nav.experience')}
+    title={t('experience.title')}
+    outline={t('experience.titleOutline')}
+    joined
+    id="experience-title"
+  />
+
+  <ol class="border-line border-t">
+    {jobs.map((job) => (
+      <li class="job border-line border-b">
+        <div class="job-meta" data-reveal>
+          <p class="label">{job.period}</p>
+          <p class="text-muted mt-2 font-mono text-xs tracking-wider uppercase">{job.location}</p>
+        </div>
+        <div>
+          <h3 class="job-company" data-reveal>
+            {job.company}
+          </h3>
+          <p class="font-display mt-3 text-xl font-semibold tracking-tight" data-reveal>
+            {job.role}
+          </p>
+          <p class="text-lead mt-5 max-w-[60ch] leading-snug" data-reveal>
+            {job.summary}
+          </p>
+          <ul class="job-list mt-6 max-w-[70ch]">
+            {job.bullets.map((bullet) => (
+              <li data-reveal>{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      </li>
+    ))}
+  </ol>
+</section>
+
+<style>
+  .job {
+    display: grid;
+    gap: 1.25rem;
+    padding-block: clamp(2rem, 4vw, 3.5rem);
+  }
+  .job-company {
+    font-size: clamp(2.25rem, 5.5vw, 4.5rem);
+    line-height: 1;
+  }
+  .job-list {
+    display: grid;
+    gap: 0.75rem;
+    color: var(--color-muted);
+  }
+  .job-list li {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  .job-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 0.75rem;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  @media (min-width: 64rem) {
+    .job {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.2fr);
+      gap: clamp(3rem, 6vw, 7rem);
+    }
+    .job-meta {
+      position: sticky;
+      top: calc(var(--nav-h) + 2rem);
+      align-self: start;
+      padding-top: 0.75rem;
+    }
+  }
+</style>

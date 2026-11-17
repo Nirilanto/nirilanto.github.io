@@ -1,0 +1,235 @@
+---
+/** Étude de cas — trame fixe : problème, contraintes, approche, compromis, résultat, projet suivant. */
+import Icon from './Icon.astro';
+import type { Project } from '../lib/content';
+import { getFeaturedProjects } from '../lib/content';
+import { localePath, toLocale, useTranslations } from '../i18n';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+
+const featured = await getFeaturedProjects(locale);
+const position = featured.findIndex((item) => item.slug === project.slug);
+const next = featured[(position + 1) % featured.length];
+
+const facts = [
+  { label: t('case.client'), value: project.client },
+  { label: t('case.role'), value: project.role },
+  { label: t('case.period'), value: project.period },
+].filter((fact) => fact.value);
+
+const sections = [
+  { key: 'problem', title: t('case.problem'), text: project.problem },
+  { key: 'constraints', title: t('case.constraints'), text: project.constraints },
+  { key: 'approach', title: t('case.approach'), list: project.approach },
+  { key: 'tradeoffs', title: t('case.tradeoffs'), text: project.tradeoffs },
+  { key: 'result', title: t('case.result'), text: project.result },
+];
+---
+
+<article class="container-page case">
+  <a href={localePath(locale, '/#projets')} class="case-back link" data-reveal>
+    <Icon name="arrow-right" class="rotate-180" />
+    {t('case.back')}
+  </a>
+
+  <header class="mt-8">
+    <p class="label" data-reveal>
+      {String(position + 1).padStart(2, '0')} / {String(featured.length).padStart(2, '0')} —{' '}
+      {project.client}
+    </p>
+    <h1 class="case-title mt-4" transition:name={`titre-${project.slug}`}>
+      {project.title}
+    </h1>
+    <p class="case-summary mt-8" data-reveal-lines>
+      {project.summary}
+    </p>
+    {project.anonymised && (
+      <p class="text-muted mt-4 font-mono text-xs tracking-wider uppercase" data-reveal>
+        {t('case.anonymised')}
+      </p>
+    )}
+  </header>
+
+  <div class="placeholder-visual case-visual mt-12" transition:name={`visuel-${project.slug}`}>
+    <div class="placeholder-visual-fill"></div>
+    <p class="placeholder-visual-caption">
+      {project.anonymised ? t('projects.visualAnon') : t('projects.visual')}
+    </p>
+  </div>
+
+  <dl class="case-facts border-line mt-12 border-y" data-reveal>
+    {facts.map((fact) => (
+      <div>
+        <dt class="label">{fact.label}</dt>
+        <dd class="font-display mt-2 text-lg font-semibold tracking-tight">{fact.value}</dd>
+      </div>
+    ))}
+    <div class="case-facts-wide">
+      <dt class="label">{t('case.stack')}</dt>
+      <dd class="mt-3">
+        <ul class="flex flex-wrap gap-2">
+          {project.tags.map((tag) => (
+            <li class="tag">{tag}</li>
+          ))}
+        </ul>
+      </dd>
+    </div>
+  </dl>
+
+  <div class="mt-4">
+    {sections.map((section, i) => (
+      <section class="case-section border-line border-b" aria-labelledby={`cas-${section.key}`}>
+        <div data-reveal>
+          <p class="label">{String(i + 1).padStart(2, '0')}</p>
+          <h2 id={`cas-${section.key}`} class="case-heading mt-3">
+            {section.title}
+          </h2>
+        </div>
+        <div class="max-w-[68ch]">
+          {section.list ? (
+            <ul class="case-list">
+              {section.list.map((item) => (
+                <li data-reveal>{item}</li>
+              ))}
+            </ul>
+          ) : section.text ? (
+            <p class="text-lead leading-snug" data-reveal>
+              {section.text}
+            </p>
+          ) : (
+            <p class="placeholder-text" data-reveal>
+              {t('case.placeholder')}
+            </p>
+          )}
+        </div>
+      </section>
+    ))}
+  </div>
+
+  {next && next.slug !== project.slug && (
+    <nav class="case-next" aria-label={t('case.next')}>
+      <p class="label" data-reveal>
+        {t('case.next')}
+      </p>
+      <a
+        href={localePath(locale, `/projets/${next.slug}/`)}
+        class="case-next-link mt-4"
+        data-reveal
+      >
+        <span>{next.title}</span>
+        <Icon name="arrow-right" size={40} />
+      </a>
+    </nav>
+  )}
+</article>
+
+<style>
+  .case {
+    padding-top: calc(var(--nav-h) + clamp(2rem, 5vw, 4rem));
+    padding-bottom: clamp(4rem, 9vw, 8rem);
+  }
+  .case-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .case-title {
+    font-size: clamp(3.25rem, 13vw, 13rem);
+    line-height: 0.92;
+  }
+  .case-summary {
+    max-width: 30ch;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+  .case-visual {
+    aspect-ratio: 16 / 9;
+  }
+  .case-facts {
+    display: grid;
+    gap: 1.75rem;
+    padding-block: 2rem;
+  }
+  .case-section {
+    display: grid;
+    gap: 1.5rem;
+    padding-block: clamp(2.5rem, 5vw, 4.5rem);
+  }
+  .case-heading {
+    font-size: clamp(2rem, 4.5vw, 4rem);
+    line-height: 1;
+  }
+  .case-list {
+    display: grid;
+    gap: 1.1rem;
+    font-size: var(--text-lead);
+    line-height: 1.35;
+  }
+  .case-list li {
+    position: relative;
+    padding-left: 1.75rem;
+  }
+  .case-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 1rem;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .case-next {
+    padding-top: clamp(3rem, 7vw, 6rem);
+  }
+  .case-next-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 10vw, 10rem);
+    font-weight: 700;
+    letter-spacing: var(--tracking-display);
+    line-height: 1;
+    transition: color var(--duration-fast) var(--ease-expo);
+  }
+  .case-next-link:hover,
+  .case-next-link:focus-visible {
+    color: var(--color-accent);
+  }
+  .case-next-link :global(svg) {
+    flex: none;
+    transition: transform var(--duration-base) var(--ease-expo);
+  }
+  .case-next-link:hover :global(svg) {
+    transform: translateX(12px);
+  }
+  @media (min-width: 48rem) {
+    .case-facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .case-facts-wide {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (min-width: 64rem) {
+    .case-section {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+      gap: clamp(3rem, 6vw, 7rem);
+    }
+  }
+</style>
