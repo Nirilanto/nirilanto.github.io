@@ -1,7 +1,7 @@
 ---
 import { Picture } from 'astro:assets';
 import portrait from '../assets/venerand-detoure.png';
-import portraitNight from '../assets/venerand.jpeg';
+import portraitNight from '../assets/venerand-nuit.jpg';
 import Icon from './Icon.astro';
 import ThreadsStatic from './ThreadsStatic.astro';
 import WeaveCanvas from './webgl/WeaveCanvas.tsx';
@@ -53,7 +53,7 @@ const [role, ...specialities] = titleParts;
         class="hero-portrait"
         data-hero-portrait
       />
-      <!-- Thème sombre : portrait sur fond noir, cadré dans l'arche -->
+      <!-- Thème sombre : portrait sur fond noir, fondu dans la page -->
       <div class="hero-night" data-hero-portrait>
         <Picture
           src={portraitNight}
@@ -187,28 +187,19 @@ const [role, ...specialities] = titleParts;
     object-position: 50% 100%;
   }
 
-  /* Thème sombre : la photo sur fond noir remplit l'arche ; un voile bleu nuit en mode
-     « lighten » teinte le noir du fond sans toucher au visage. */
+  /* Thème sombre : même cadre que le portrait clair, sans panneau derrière. Le fond noir
+     de la photo se fond dans la page (fusion « lighten »). */
   .hero-night {
     display: none;
     position: absolute;
-    inset: 6% 4% 0 4%;
-    overflow: hidden;
-    isolation: isolate;
-    border-radius: 999px 999px 0 0;
-  }
-  .hero-night::after {
-    content: '';
-    position: absolute;
     inset: 0;
-    background: var(--portrait-night-tint);
     mix-blend-mode: lighten;
   }
   .hero-night :global(.hero-night-img) {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: 50% 0%;
+    object-fit: contain;
+    object-position: 50% 100%;
   }
   :global([data-theme='dark']) .hero-night {
     display: block;
