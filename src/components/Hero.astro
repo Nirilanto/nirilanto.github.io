@@ -151,7 +151,7 @@ const statementText = copy.statement.map((part) => part.text).join('');
   .hero-grid {
     display: grid;
     grid-template-areas: 'head' 'figure' 'info' 'chips';
-    row-gap: 2rem;
+    row-gap: 1.5rem;
     min-height: 100svh;
     padding-top: calc(var(--nav-h) + 1rem);
   }
@@ -179,19 +179,17 @@ const statementText = copy.statement.map((part) => part.text).join('');
   }
   @media (min-width: 64rem) {
     .hero-grid {
-      grid-template-columns: minmax(0, 1fr) clamp(18rem, 31vw, 34rem);
-      grid-template-rows: auto 1fr;
-      grid-template-areas: 'head figure' 'info figure';
+      /* Nom et accroche forment un seul bloc centré ; le portrait occupe toute la hauteur. */
+      grid-template-columns: minmax(0, 1fr) clamp(20rem, 35vw, 44rem);
+      grid-template-rows: 1fr auto auto 1.25fr;
+      grid-template-areas: '. figure' 'head figure' 'info figure' '. figure';
       column-gap: clamp(2rem, 4vw, 5rem);
-      row-gap: 2.5rem;
-    }
-    .hero-head {
-      padding-top: clamp(0.25rem, 2svh, 1.5rem);
+      row-gap: 0;
     }
     .hero-info {
-      align-self: center;
       gap: 2.25rem;
-      padding-bottom: 3.5rem;
+      padding-top: clamp(1.75rem, 5svh, 3.5rem);
+      padding-bottom: 0;
     }
   }
 
@@ -337,16 +335,16 @@ const statementText = copy.statement.map((part) => part.text).join('');
       position: absolute;
     }
     .hero-chip-slot-1 {
-      left: -20%;
-      top: 47%;
+      left: -6%;
+      top: 53%;
     }
     .hero-chip-slot-2 {
-      left: -7%;
-      top: 61%;
+      left: 5%;
+      top: 65%;
     }
     .hero-chip-slot-3 {
-      left: -26%;
-      top: 75%;
+      left: -10%;
+      top: 77%;
     }
     .hero-chip {
       animation: hero-float 7s ease-in-out infinite;
@@ -375,7 +373,8 @@ const statementText = copy.statement.map((part) => part.text).join('');
     z-index: 11; /* devant les rubans : ils passent derrière la silhouette */
     align-self: end;
     justify-self: end;
-    width: min(72%, 20rem);
+    /* Mobile : portrait réduit pour que l'accroche commence dans le premier écran. */
+    width: min(56%, 20rem);
     aspect-ratio: 3 / 4;
   }
   @media (min-width: 64rem) {
@@ -465,10 +464,10 @@ const statementText = copy.statement.map((part) => part.text).join('');
   }
   @media (min-width: 64rem) {
     .hero-badge {
-      left: auto;
-      right: -1rem;
+      /* En haut à gauche du portrait : le bord droit est réservé au sommaire. */
+      left: -1.5rem;
       bottom: auto;
-      top: 4%;
+      top: 7%;
     }
   }
   .hero-badge-ring {
