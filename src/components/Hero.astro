@@ -5,13 +5,15 @@ import portraitNight from '../assets/venerand-nuit.jpg';
 import Icon from './Icon.astro';
 import ThreadsStatic from './ThreadsStatic.astro';
 import WeaveCanvas from './webgl/WeaveCanvas.tsx';
-import { profile, site } from '../data/site';
+import { heroCopy, profile, site } from '../data/site';
 import { toLocale, useTranslations } from '../i18n';
 
 const locale = toLocale(Astro.currentLocale);
 const t = useTranslations(locale);
-const { titleParts, tagline, location } = profile[locale];
-const [role, ...specialities] = titleParts;
+const { titleParts, location } = profile[locale];
+const [role] = titleParts;
+const copy = heroCopy[locale];
+const statementText = copy.statement.map((part) => part.text).join('');
 ---
 
 <section class="hero bg-bg relative isolate overflow-clip" aria-labelledby="hero-title" data-hero>
@@ -26,9 +28,15 @@ const [role, ...specialities] = titleParts;
 
   <div class="hero-grid container-page">
     <div class="hero-head">
-      <p class="label" data-hero-fade>
-        {t('hero.label')} — {location}
-      </p>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-hero-fade>
+        <p class="label">
+          {t('hero.label')} — {location}
+        </p>
+        <p class="hero-pill">
+          <span class="hero-pill-dot" aria-hidden="true"></span>
+          {copy.experience}
+        </p>
+      </div>
 
       <h1 id="hero-title" class="hero-name mt-4 -ml-[0.04em]" aria-label={site.name}>
         <span class="hero-line block" aria-hidden="true" data-hero-line>
@@ -81,20 +89,24 @@ const [role, ...specialities] = titleParts;
     </figure>
 
     <div class="hero-info border-line border-t pt-8" data-hero-info>
-      <div data-hero-fade>
-        <p class="font-display text-2xl leading-tight font-semibold tracking-tight md:text-3xl">
+      <div>
+        <p class="text-muted font-mono text-xs tracking-wider uppercase" data-hero-fade>
           {role}
         </p>
-        <ul class="text-muted mt-3 flex flex-col gap-1 font-mono text-xs tracking-wider uppercase">
-          {specialities.map((item) => (
-            <li>{item}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <p class="text-lead max-w-[44ch] leading-snug" data-hero-fade>
-          {tagline}
+        <!-- Phrase d'accroche : barre oblique, mots surlignés qui se remplissent à l'entrée. -->
+        <p class="hero-statement mt-4" aria-label={statementText} data-hero-fade>
+          <span class="hero-slash" aria-hidden="true"></span>
+          <span aria-hidden="true">
+            {copy.statement.map((part) =>
+              part.mark ? (
+                <span class:list={['hero-mark', `hero-mark-${part.mark}`]} data-hero-mark>
+                  <span class="hero-mark-text">{part.text}</span>
+                </span>
+              ) : (
+                part.text
+              ),
+            )}
+          </span>
         </p>
         <div class="mt-7 flex flex-wrap gap-3" data-hero-fade>
           <a href="#projets" class="btn btn-primary" data-magnetic>
@@ -107,6 +119,18 @@ const [role, ...specialities] = titleParts;
           </a>
         </div>
       </div>
+
+      <ul class="hero-pillars">
+        {copy.pillars.map((pillar, i) => (
+          <li class="hero-pillar" data-hero-fade>
+            <span class="hero-pillar-icon">
+              <Icon name={pillar.icon} size={20} />
+            </span>
+            <span class="hero-pillar-index">{String(i + 1).padStart(2, '0')}</span>
+            <span class="hero-pillar-label">{pillar.label}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   </div>
 </section>
@@ -147,13 +171,133 @@ const [role, ...specialities] = titleParts;
       align-self: end;
     }
     .hero-info {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem);
+      align-items: end;
       gap: 2.5rem;
       padding-bottom: 3.5rem;
     }
     .hero-name {
       font-size: clamp(5rem, min(11.6vw, 25svh), 13rem);
     }
+  }
+
+  /* Pastille « +8 ans d'expérience » */
+  .hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-pill-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--color-accent);
+    animation: hero-pulse 2.4s var(--ease-expo) infinite;
+  }
+  @keyframes hero-pulse {
+    50% {
+      transform: scale(1.9);
+      opacity: 0.35;
+    }
+  }
+
+  /* Phrase d'accroche avec barre oblique et mots surlignés */
+  .hero-statement {
+    position: relative;
+    max-width: 24ch;
+    padding-left: 1.9rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.35vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.22;
+  }
+  .hero-slash {
+    position: absolute;
+    left: 0.6rem;
+    top: 0.1em;
+    bottom: 0.1em;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--color-accent);
+    transform: skewX(-14deg);
+  }
+  .hero-mark {
+    position: relative;
+    display: inline-block;
+    padding-inline: 0.22em;
+    margin-inline: -0.08em;
+    white-space: nowrap;
+  }
+  .hero-mark::before {
+    content: '';
+    position: absolute;
+    inset: 0.08em 0;
+    border-radius: 0.28em;
+    transform-origin: 0 50%;
+    transition: transform var(--duration-slow) var(--ease-expo) 0.9s;
+  }
+  .hero-mark-soft::before {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  }
+  .hero-mark-soft {
+    color: var(--color-accent);
+  }
+  .hero-mark-solid::before {
+    background: var(--color-accent);
+    transform: rotate(-1.5deg);
+  }
+  .hero-mark-solid {
+    color: var(--color-on-accent);
+  }
+  .hero-mark-text {
+    position: relative;
+  }
+
+  /* Trois piliers */
+  .hero-pillars {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .hero-pillar {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.9rem 0.6rem 0.6rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.9rem;
+    background: color-mix(in srgb, var(--color-card) 78%, transparent);
+  }
+  .hero-pillar-icon {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent);
+  }
+  .hero-pillar-index {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-muted);
+  }
+  .hero-pillar-label {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
   }
 
   /* Portrait posé sur le bas du hero, sans panneau derrière. */
@@ -280,6 +424,12 @@ const [role, ...specialities] = titleParts;
   /* État initial avant l'animation d'entrée : uniquement si JS et mouvement autorisés.
      Le filet de sécurité réaffiche tout si le script ne s'exécute pas. */
   @media (prefers-reduced-motion: no-preference) {
+    :global(.js) [data-hero]:not([data-hero-ready]) .hero-mark-soft::before {
+      transform: scaleX(0);
+    }
+    :global(.js) [data-hero]:not([data-hero-ready]) .hero-mark-solid::before {
+      transform: rotate(-1.5deg) scaleX(0);
+    }
     :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-line],
     :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-fade],
     :global(.js) [data-hero]:not([data-hero-ready]) :global([data-hero-portrait]) {
