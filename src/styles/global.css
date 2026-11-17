@@ -48,7 +48,7 @@
   --ribbon-back: #1463e0;
   --ribbon-shine: #dcebff;
   --ribbon-blend: multiply;
-  --portrait-panel: #1463e0;
+  --ribbon-quiet: 0;
   --weave-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cdefs%3E%3Cpattern id='w' width='67.882' height='67.882' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Cg fill='%23EAF1FC' stroke='%23D9E5F7'%3E%3Crect x='0' y='3.05' width='33.941' height='27.841'/%3E%3Crect x='36.991' y='0' width='27.841' height='33.941'/%3E%3Crect x='3.05' y='33.941' width='27.841' height='33.941'/%3E%3Crect x='33.941' y='36.991' width='33.941' height='27.841'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect width='96' height='96' fill='url(%23w)'/%3E%3C/svg%3E");
 }
 
@@ -67,7 +67,7 @@
   --ribbon-back: #12357f;
   --ribbon-shine: #8fc0ff;
   --ribbon-blend: screen;
-  --portrait-panel: #163f96;
+  --ribbon-quiet: 1;
   --weave-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cdefs%3E%3Cpattern id='w' width='67.882' height='67.882' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Cg fill='%230B1122' stroke='%23141C33'%3E%3Crect x='0' y='3.05' width='33.941' height='27.841'/%3E%3Crect x='36.991' y='0' width='27.841' height='33.941'/%3E%3Crect x='3.05' y='33.941' width='27.841' height='33.941'/%3E%3Crect x='33.941' y='36.991' width='33.941' height='27.841'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect width='96' height='96' fill='url(%23w)'/%3E%3C/svg%3E");
 }
 

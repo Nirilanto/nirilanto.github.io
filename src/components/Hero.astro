@@ -41,7 +41,6 @@ const [role, ...specialities] = titleParts;
     </div>
 
     <figure class="hero-figure" data-hero-figure>
-      <div class="hero-arch" data-hero-arch></div>
       <Picture
         src={portrait}
         alt={t('hero.portraitAlt')}
@@ -157,9 +156,10 @@ const [role, ...specialities] = titleParts;
     }
   }
 
-  /* Portrait détouré devant une arche : la tête dépasse, les pieds posés sur le bas du hero. */
+  /* Portrait posé sur le bas du hero, sans panneau derrière. */
   .hero-figure {
     position: relative;
+    z-index: 11; /* devant les rubans : ils passent derrière la silhouette */
     align-self: end;
     justify-self: end;
     width: min(72%, 20rem);
@@ -171,13 +171,6 @@ const [role, ...specialities] = titleParts;
       max-height: calc(100svh - var(--nav-h) - 1.5rem);
     }
   }
-  .hero-arch {
-    position: absolute;
-    inset: 16% 4% 0 4%;
-    border-radius: 999px 999px 0 0;
-    background: var(--portrait-panel);
-    transform-origin: 50% 100%;
-  }
   .hero-figure :global(.hero-portrait) {
     position: absolute;
     inset: auto 0 0 0;
@@ -187,12 +180,14 @@ const [role, ...specialities] = titleParts;
     object-position: 50% 100%;
   }
 
-  /* Thème sombre : même cadre que le portrait clair, sans panneau derrière. Le fond noir
-     de la photo se fond dans la page (fusion « lighten »). */
+  /* Thème sombre : même cadre que le portrait clair, photo sur fond noir. */
   .hero-night {
     display: none;
     position: absolute;
     inset: 0;
+  }
+  /* Le fond noir de la photo disparaît : seuls le visage et la chemise restent devant les rubans. */
+  :global([data-theme='dark']) .hero-figure {
     mix-blend-mode: lighten;
   }
   .hero-night :global(.hero-night-img) {
@@ -204,7 +199,6 @@ const [role, ...specialities] = titleParts;
   :global([data-theme='dark']) .hero-night {
     display: block;
   }
-  :global([data-theme='dark']) .hero-arch,
   :global([data-theme='dark']) .hero-figure :global(.hero-portrait) {
     display: none;
   }
@@ -288,7 +282,6 @@ const [role, ...specialities] = titleParts;
   @media (prefers-reduced-motion: no-preference) {
     :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-line],
     :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-fade],
-    :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-arch],
     :global(.js) [data-hero]:not([data-hero-ready]) :global([data-hero-portrait]) {
       opacity: 0;
       animation: hero-failsafe 0s linear 4s forwards;
@@ -325,16 +318,13 @@ const [role, ...specialities] = titleParts;
 
     gsap.set(split.chars, { yPercent: 115, rotate: 9, transformOrigin: '0% 100%' });
     gsap.set(fades, { y: 24, opacity: 0 });
-    const arch = hero.querySelector('[data-hero-arch]');
     const photo = hero.querySelectorAll('[data-hero-portrait]');
-    gsap.set(arch, { scaleY: 0 });
     gsap.set(photo, { yPercent: 6, opacity: 0 });
     hero.dataset.heroReady = 'true';
 
     gsap
       .timeline({ defaults: { ease: EASE } })
       .to(split.chars, { yPercent: 0, rotate: 0, duration: DURATION.slow, stagger: 0.04 })
-      .to(arch, { scaleY: 1, duration: DURATION.slow }, 0.1)
       .to(photo, { yPercent: 0, opacity: 1, duration: DURATION.slow }, 0.35)
       .to(fades, { y: 0, opacity: 1, duration: DURATION.base, stagger: 0.08 }, DURATION.fast);
   }

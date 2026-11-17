@@ -126,6 +126,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
   // Zone du portrait (x0, y0, x1, y1 en UV) : les rubans s'y font discrets.
   const uBoxMin = uniform(new Vector2(2, 2));
   const uBoxMax = uniform(new Vector2(3, 3));
+  const uQuiet = uniform(0); // 1 : rubans coupés autour du portrait (photo non détourée)
 
   // Couleurs lues dans les variables CSS : elles suivent le thème clair / sombre.
   const uBase = uniform(new Color());
@@ -140,6 +141,7 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     uFront.value.set(read('--ribbon-front', '#8fbcff'));
     uBack.value.set(read('--ribbon-back', '#1463e0'));
     uShine.value.set(read('--ribbon-shine', '#dcebff'));
+    uQuiet.value = Number(read('--ribbon-quiet', '0')) || 0;
   };
   readTheme();
 
@@ -224,11 +226,11 @@ export async function createWeaveScene(canvas: HTMLCanvasElement): Promise<Weave
     // Sous le titre, les rubans s'effacent pour laisser lire le texte courant.
     const calm = smoothstep(uCalm.x, uCalm.y, uv().y).mul(0.78).oneMinus();
     const u = uv();
-    // Autour du portrait : zone calme en ellipse, sans bord droit visible.
+    // Photo non détourée (thème sombre) : zone calme en ellipse serrée sur la silhouette.
     const centre = uBoxMin.add(uBoxMax).mul(0.5);
-    const half = uBoxMax.sub(uBoxMin).mul(0.5);
-    const inBox = smoothstep(0.92, 1.42, length(u.sub(centre).div(half))).oneMinus();
-    const quiet = inBox.oneMinus();
+    const half = uBoxMax.sub(uBoxMin).mul(vec2(0.3, 0.5));
+    const inBox = smoothstep(0.8, 1.35, length(u.sub(centre).div(half))).oneMinus();
+    const quiet = inBox.mul(uQuiet).oneMinus();
     return mix(uBase, colour, alpha.mul(calm).mul(quiet));
   });
 
