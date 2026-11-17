@@ -42,6 +42,7 @@ const projects = await getFeaturedProjects(locale);
               <a
                 href={localePath(locale, `/projets/${project.slug}/`)}
                 class="project-link"
+                data-cursor-label={t('cursor.view')}
                 transition:name={`titre-${project.slug}`}
               >
                 {project.title}
