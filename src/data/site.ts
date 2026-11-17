@@ -6,7 +6,11 @@ export const site = {
   name: 'Venerand Nirilanto',
   firstName: 'Venerand',
   lastName: 'Nirilanto',
-  email: 'rtnirilantov@gmail.com',
+  email: 'nirivenerand@gmail.com',
+  /** Affichage, lien tel: et lien WhatsApp (même numéro). */
+  phone: '+33 6 15 50 74 41',
+  phoneHref: 'tel:+33615507441',
+  whatsapp: 'https://wa.me/33615507441',
   linkedin: 'https://www.linkedin.com/in/venerand-nirilanto-36294a15b',
   /** [placeholder] — à fournir, voir TODO-contenu.md */
   github: null as string | null,

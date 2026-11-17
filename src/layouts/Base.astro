@@ -32,6 +32,7 @@ const person = {
   jobTitle: me.titleParts[0],
   description: me.tagline,
   email: `mailto:${site.email}`,
+  telephone: site.phoneHref.replace('tel:', ''),
   url: Astro.site?.href,
   address: { '@type': 'PostalAddress', addressLocality: 'Rennes', addressCountry: 'FR' },
   alumniOf: {

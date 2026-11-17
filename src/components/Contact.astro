@@ -25,11 +25,24 @@ const t = useTranslations(toLocale(Astro.currentLocale));
   <a href={`mailto:${site.email}`} class="contact-mail link mt-10" data-reveal>
     {site.email}
   </a>
+  <p class="mt-4" data-reveal>
+    <a href={site.phoneHref} class="contact-phone link">
+      {site.phone}
+    </a>
+  </p>
 
   <div class="mt-10 flex flex-wrap items-center gap-3" data-reveal>
     <a href={`mailto:${site.email}`} class="btn btn-primary" data-magnetic>
       <Icon name="mail" />
       {t('contact.email')}
+    </a>
+    <a href={site.whatsapp} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
+      <Icon name="chat" />
+      WhatsApp
+    </a>
+    <a href={site.phoneHref} class="btn" data-magnetic>
+      <Icon name="phone" />
+      {t('contact.call')}
     </a>
     <a href={site.linkedin} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
       LinkedIn
@@ -57,6 +70,19 @@ const t = useTranslations(toLocale(Astro.currentLocale));
     font-weight: 600;
     letter-spacing: -0.03em;
     overflow-wrap: anywhere;
+  }
+  .contact-phone {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+  }
+  .contact-phone::after {
+    bottom: 0.4rem;
+    background: var(--color-accent);
   }
   .contact-mail::after {
     background: var(--color-accent);
