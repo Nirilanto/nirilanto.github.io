@@ -1,4 +1,6 @@
 ---
+import ProjectVisual from './ProjectVisual.astro';
+import TechTag from './TechTag.astro';
 import Icon from './Icon.astro';
 import SectionHeading from './SectionHeading.astro';
 import { getFeaturedProjects } from '../lib/content';
@@ -27,10 +29,7 @@ const projects = await getFeaturedProjects(locale);
             data-clip
             transition:name={`visuel-${project.slug}`}
           >
-            <div class="placeholder-visual-fill" />
-            <p class="placeholder-visual-caption">
-              {project.anonymised ? t('projects.visualAnon') : t('projects.visual')}
-            </p>
+            <ProjectVisual project={project} sizes="(min-width: 64rem) 46vw, 92vw" />
           </div>
 
           <div class="project-body">
@@ -56,7 +55,7 @@ const projects = await getFeaturedProjects(locale);
             </p>
             <ul class="mt-6 flex flex-wrap gap-2" data-reveal>
               {project.tags.map((tag) => (
-                <li class="tag">{tag}</li>
+                <TechTag name={tag} />
               ))}
             </ul>
             <p class="project-cta mt-8" aria-hidden="true" data-reveal>
@@ -98,6 +97,9 @@ const projects = await getFeaturedProjects(locale);
   }
   .project:hover :global(.placeholder-visual-fill) {
     transform: scale(1.08) rotate(1.5deg);
+  }
+  .project:hover :global(.project-image) {
+    transform: scale(1.04);
   }
   .project-cta {
     display: inline-flex;

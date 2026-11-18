@@ -1,4 +1,5 @@
 ---
+import TechTag from './TechTag.astro';
 import { Picture } from 'astro:assets';
 import portraitDay from '../assets/venenrand.jpeg';
 import portraitNight from '../assets/venerand.jpeg';
@@ -102,7 +103,7 @@ const photos = [
             <dd>
               <ul class="flex flex-wrap gap-2">
                 {group.items.map((item) => (
-                  <li class="tag">{item}</li>
+                  <TechTag name={item} />
                 ))}
               </ul>
             </dd>

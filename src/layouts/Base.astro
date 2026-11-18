@@ -5,6 +5,8 @@ import textFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.w
 import Cursor from '../components/Cursor.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import ThreadsStatic from '../components/ThreadsStatic.astro';
+import WeaveCanvas from '../components/webgl/WeaveCanvas.tsx';
 import { profile, site } from '../data/site';
 import { localeMeta, locales, switchLocalePath, toLocale, useTranslations } from '../i18n';
 import '../styles/global.css';
@@ -40,7 +42,7 @@ const person = {
     '@type': 'CollegeOrUniversity',
     name: 'École Nationale d’Informatique (ENI), Fianarantsoa',
   },
-  sameAs: [site.linkedin, site.github].filter(Boolean),
+  sameAs: [site.linkedin],
 };
 ---
 
@@ -113,6 +115,14 @@ const person = {
       {t('skip.content')}
     </a>
     <div class="progress" aria-hidden="true" data-progress></div>
+    <!-- Fil conducteur : tracé statique derrière le contenu (repli), rubans animés
+         par-dessus en mode fusion. Le calque animé est conservé d'une page à l'autre. -->
+    <div class="weave-static text-accent" aria-hidden="true">
+      <ThreadsStatic />
+    </div>
+    <div class="weave-glass" aria-hidden="true" transition:persist="weave">
+      <WeaveCanvas client:idle />
+    </div>
     <Nav />
     <main id="contenu">
       <slot />

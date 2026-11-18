@@ -1,0 +1,50 @@
+---
+/**
+ * Contenu du cadre visuel d'un projet : l'image si elle existe (src/assets),
+ * sinon le bloc [placeholder]. Le cadre lui-même reste porté par l'appelant.
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import comparecycle from '../assets/comparecycle.jpeg';
+import pampers from '../assets/pampers.jpeg';
+import trackAdvance from '../assets/trackadvance.jpeg';
+import type { Project } from '../lib/content';
+import { toLocale, useTranslations } from '../i18n';
+
+interface Props {
+  project: Project;
+  /** Largeur affichée, pour le choix de la source (attribut sizes). */
+  sizes: string;
+  /** Image au-dessus de la ligne de flottaison : chargée sans attendre. */
+  eager?: boolean;
+}
+const { project, sizes, eager = false } = Astro.props;
+const t = useTranslations(toLocale(Astro.currentLocale));
+
+const visuals: Record<string, ImageMetadata> = {
+  'track-advance': trackAdvance,
+  comparecycle,
+  pampers,
+};
+const image = visuals[project.slug];
+---
+
+{image ? (
+  <Picture
+    src={image}
+    alt={`${t('projects.visualAlt')} ${project.title}`}
+    formats={['avif', 'webp']}
+    widths={[640, 960, 1280, 1920, 2624]}
+    sizes={sizes}
+    loading={eager ? 'eager' : 'lazy'}
+    fetchpriority={eager ? 'high' : undefined}
+    class="project-image"
+  />
+) : (
+  <>
+    <div class="placeholder-visual-fill" />
+    <p class="placeholder-visual-caption">
+      {project.anonymised ? t('projects.visualAnon') : t('projects.visual')}
+    </p>
+  </>
+)}

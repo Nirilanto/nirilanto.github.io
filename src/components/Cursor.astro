@@ -102,7 +102,8 @@
 </style>
 
 <script>
-  import { gsap } from 'gsap';
+  import { animate, cancelFrame, frame } from 'motion';
+  import { EASE } from '../lib/motion';
 
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -121,8 +122,9 @@
 
     const target = { x: 0, y: 0 };
     const trail = { x: 0, y: 0 };
-    const setDot = { x: gsap.quickSetter(dot, 'x', 'px'), y: gsap.quickSetter(dot, 'y', 'px') };
-    const setRing = { x: gsap.quickSetter(ring, 'x', 'px'), y: gsap.quickSetter(ring, 'y', 'px') };
+    const place = (el: HTMLElement, x: number, y: number) => {
+      el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    };
     let seen = false;
 
     const describe = (el: Element | null) => {
@@ -161,21 +163,22 @@
       root.classList.remove('is-label', 'is-link');
     });
 
-    gsap.ticker.add(() => {
+    // Boucle de rendu de Motion : le point colle à la souris, l'anneau suit avec retard.
+    const follow = () => {
       if (!seen) return;
       trail.x += (target.x - trail.x) * 0.18;
       trail.y += (target.y - trail.y) * 0.18;
-      setDot.x(target.x);
-      setDot.y(target.y);
-      setRing.x(trail.x);
-      setRing.y(trail.y);
-    });
+      place(dot, target.x, target.y);
+      place(ring, trail.x, trail.y);
+    };
+    frame.render(follow, true);
+    window.addEventListener('pagehide', () => cancelFrame(follow), { once: true });
 
     // Boutons magnétiques : le bouton suit légèrement la souris, puis revient.
     let magnet: HTMLElement | null = null;
     const release = () => {
       if (!magnet) return;
-      gsap.to(magnet, { x: 0, y: 0, duration: 0.8, ease: 'expo.out', overwrite: 'auto' });
+      animate(magnet, { x: 0, y: 0 }, { duration: 0.8, ease: EASE });
       magnet = null;
     };
     window.addEventListener(
@@ -189,15 +192,10 @@
         magnet = el;
         const box = el.getBoundingClientRect();
         // La boîte inclut déjà le décalage en cours : on le retire pour viser le centre au repos.
-        const dx = event.clientX - (box.left + box.width / 2) + Number(gsap.getProperty(el, 'x'));
-        const dy = event.clientY - (box.top + box.height / 2) + Number(gsap.getProperty(el, 'y'));
-        gsap.to(el, {
-          x: dx * 0.18,
-          y: dy * 0.3,
-          duration: 0.4,
-          ease: 'expo.out',
-          overwrite: 'auto',
-        });
+        const shift = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+        const dx = event.clientX - (box.left + box.width / 2) + shift.m41;
+        const dy = event.clientY - (box.top + box.height / 2) + shift.m42;
+        animate(el, { x: dx * 0.18, y: dy * 0.3 }, { duration: 0.4, ease: EASE });
       },
       { passive: true },
     );

@@ -1,91 +1,270 @@
 ---
+/**
+ * Contact : grand titre, sceau rotatif qui ouvre l'e-mail, puis les canaux en liste
+ * éditoriale — chaque ligne se remplit de la couleur d'accent au survol.
+ */
 import Icon from './Icon.astro';
 import { site } from '../data/site';
 import { toLocale, useTranslations } from '../i18n';
 
 const t = useTranslations(toLocale(Astro.currentLocale));
+const mailto = `mailto:${site.email}`;
+
+const channels = [
+  { name: t('contact.mail'), value: site.email, href: mailto, external: false },
+  { name: t('contact.phone'), value: site.phone, href: site.phoneHref, external: false },
+  { name: 'WhatsApp', value: site.phone, href: site.whatsapp, external: true },
+  { name: 'LinkedIn', value: site.name, href: site.linkedin, external: true },
+];
+const sealText = `${t('contact.email')} • `.repeat(2);
 ---
 
-<section id="contact" class="section container-page" aria-labelledby="contact-title">
-  <p class="label" data-reveal>
-    06 — {t('contact.label')}
-  </p>
-  <h2
-    id="contact-title"
-    class="contact-title mt-4"
-    aria-label={`${t('contact.title')} ${t('contact.titleOutline')}`}
-    data-reveal-lines
-  >
-    <span aria-hidden="true">{t('contact.title')}</span>{' '}
-    <span class="outline-text" aria-hidden="true">
-      {t('contact.titleOutline')}
-    </span>
-  </h2>
+<section id="contact" class="contact section container-page" aria-labelledby="contact-title">
+  <div class="contact-head">
+    <div>
+      <p class="label" data-reveal>
+        06 — {t('contact.label')}
+      </p>
+      <h2
+        id="contact-title"
+        class="contact-title mt-4"
+        aria-label={`${t('contact.title')} ${t('contact.titleOutline')}`}
+        data-reveal-lines
+      >
+        <span aria-hidden="true">{t('contact.title')}</span>{' '}
+        <span class="outline-text" aria-hidden="true">
+          {t('contact.titleOutline')}
+        </span>
+      </h2>
+      <p class="contact-lead mt-6" data-reveal>
+        {t('contact.lead')}
+      </p>
+    </div>
 
-  <a href={`mailto:${site.email}`} class="contact-mail link mt-10" data-reveal>
-    {site.email}
-  </a>
-  <p class="mt-4" data-reveal>
-    <a href={site.phoneHref} class="contact-phone link">
-      {site.phone}
-    </a>
-  </p>
-
-  <div class="mt-10 flex flex-wrap items-center gap-3" data-reveal>
-    <a href={`mailto:${site.email}`} class="btn btn-primary" data-magnetic>
-      <Icon name="mail" />
-      {t('contact.email')}
-    </a>
-    <a href={site.whatsapp} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
-      <Icon name="chat" />
-      WhatsApp
-    </a>
-    <a href={site.phoneHref} class="btn" data-magnetic>
-      <Icon name="phone" />
-      {t('contact.call')}
-    </a>
-    <a href={site.linkedin} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
-      LinkedIn
-      <Icon name="arrow-up-right" />
-    </a>
-    {site.github ? (
-      <a href={site.github} class="btn" target="_blank" rel="noopener noreferrer" data-magnetic>
-        GitHub
-        <Icon name="arrow-up-right" />
+    <!-- Sceau : texte qui tourne autour d'un disque plein. L'enveloppe porte la révélation,
+         le lien porte l'effet magnétique (deux transformations distinctes). -->
+    <div class="contact-seal-wrap" data-reveal>
+      <a href={mailto} class="contact-seal" aria-label={t('contact.email')} data-magnetic>
+        <svg viewBox="0 0 160 160" class="contact-seal-ring" aria-hidden="true">
+          <defs>
+            <path
+              id="contact-seal-path"
+              d="M80 80m-62 0a62 62 0 1 1 124 0a62 62 0 1 1 -124 0"
+            ></path>
+          </defs>
+          <text textLength="386" lengthAdjust="spacing">
+            <textPath href="#contact-seal-path">{sealText}</textPath>
+          </text>
+        </svg>
+        <span class="contact-seal-core">
+          <Icon name="arrow-up-right" size={30} />
+        </span>
       </a>
-    ) : (
-      <span class="placeholder-text">{t('contact.github')}</span>
-    )}
+    </div>
+  </div>
+
+  <div class="contact-channels">
+    <ul class="contact-list">
+      {channels.map((channel, i) => (
+        <li data-reveal>
+          <a
+            href={channel.href}
+            class="contact-row"
+            target={channel.external ? '_blank' : undefined}
+            rel={channel.external ? 'noopener noreferrer' : undefined}
+          >
+            <span class="contact-row-index">{String(i + 1).padStart(2, '0')}</span>
+            <span class="contact-row-name">{channel.name}</span>
+            <span class="contact-row-value">{channel.value}</span>
+            <span class="contact-row-arrow" aria-hidden="true">
+              <Icon name="arrow-up-right" size={20} />
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
   </div>
 </section>
 
 <style>
+  /* Compact : sur grand écran, titre et sceau à gauche, canaux à droite — le tout
+     tient dans un écran. */
+  .contact {
+    display: grid;
+    gap: 2.5rem;
+  }
+  .contact-head {
+    display: grid;
+    gap: 2rem;
+  }
   .contact-title {
-    font-size: clamp(3rem, 11vw, 11rem);
+    font-size: clamp(2.75rem, 6.2vw, 6.5rem);
     line-height: 0.95;
   }
-  .contact-mail {
+  .contact-lead {
+    max-width: 30ch;
     font-family: var(--font-display);
-    font-size: clamp(1.25rem, 4vw, 3rem);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    overflow-wrap: anywhere;
-  }
-  .contact-phone {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
-    font-family: var(--font-mono);
-    font-size: clamp(1rem, 2vw, 1.5rem);
-    letter-spacing: 0.04em;
+    font-size: clamp(1.125rem, 1.5vw, 1.375rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
     color: var(--color-muted);
   }
-  .contact-phone::after {
-    bottom: 0.4rem;
-    background: var(--color-accent);
+  @media (min-width: 64rem) {
+    .contact {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(3rem, 6vw, 7rem);
+    }
   }
-  .contact-mail::after {
+
+  /* Sceau rotatif */
+  .contact-seal {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: clamp(7.5rem, 10vw, 9.5rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    color: var(--color-fg);
+  }
+  .contact-seal-ring {
+    position: absolute;
+    inset: 0;
+    animation: contact-seal-spin 22s linear infinite;
+  }
+  .contact-seal-ring text {
+    fill: currentColor;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .contact-seal-core {
+    display: grid;
+    place-items: center;
+    width: 52%;
+    aspect-ratio: 1;
+    border-radius: 50%;
     background: var(--color-accent);
-    height: 2px;
+    color: var(--color-on-accent);
+    box-shadow: 0 22px 44px -22px var(--color-accent);
+    transition: transform var(--duration-base) var(--ease-expo);
+  }
+  .contact-seal-core :global(svg) {
+    transition: transform var(--duration-base) var(--ease-expo);
+  }
+  .contact-seal:hover .contact-seal-core,
+  .contact-seal:focus-visible .contact-seal-core {
+    transform: scale(1.14);
+  }
+  .contact-seal:hover .contact-seal-core :global(svg),
+  .contact-seal:focus-visible .contact-seal-core :global(svg) {
+    transform: rotate(45deg);
+  }
+  @keyframes contact-seal-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Canaux : liste éditoriale */
+  .contact-list {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .contact-row {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    grid-template-areas: 'index name arrow' '. value arrow';
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.25rem;
+    padding: 0.9rem 0.25rem;
+    border-top: 1px solid var(--color-line);
+    overflow: hidden;
+    transition:
+      color var(--duration-fast) var(--ease-expo),
+      padding var(--duration-base) var(--ease-expo);
+  }
+  /* Remplissage qui monte depuis le bas de la ligne. */
+  .contact-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--color-accent);
+    transform: scaleY(0);
+    transform-origin: 50% 100%;
+    transition: transform var(--duration-base) var(--ease-expo);
+  }
+  .contact-row-index {
+    grid-area: index;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+  }
+  .contact-row-name {
+    grid-area: name;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .contact-row-value {
+    grid-area: value;
+    font-family: var(--font-display);
+    font-size: clamp(1.125rem, 1.7vw, 1.625rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+  .contact-row-arrow {
+    grid-area: arrow;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    aspect-ratio: 1;
+    border: 1px solid var(--color-line);
+    border-radius: 50%;
+    transition:
+      transform var(--duration-base) var(--ease-expo),
+      border-color var(--duration-fast) var(--ease-expo);
+  }
+  .contact-row-index,
+  .contact-row-name {
+    transition: color var(--duration-fast) var(--ease-expo);
+  }
+  .contact-row:hover,
+  .contact-row:focus-visible {
+    padding-inline: 1.25rem;
+    color: var(--color-on-accent);
+  }
+  .contact-row:hover::before,
+  .contact-row:focus-visible::before {
+    transform: scaleY(1);
+  }
+  .contact-row:hover .contact-row-index,
+  .contact-row:hover .contact-row-name,
+  .contact-row:focus-visible .contact-row-index,
+  .contact-row:focus-visible .contact-row-name {
+    color: var(--color-on-accent);
+  }
+  .contact-row:hover .contact-row-arrow,
+  .contact-row:focus-visible .contact-row-arrow {
+    border-color: currentColor;
+    transform: rotate(45deg);
+  }
+  @media (min-width: 48rem) {
+    .contact-row {
+      grid-template-columns: 2.25rem 7rem minmax(0, 1fr) auto;
+      grid-template-areas: 'index name value arrow';
+      padding-block: 1.1rem;
+    }
   }
 </style>

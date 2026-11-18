@@ -1,0 +1,29 @@
+---
+/**
+ * Étiquette de technologie, précédée du logo de la marque quand il existe
+ * (Simple Icons, intégré en SVG à la compilation). Sans logo connu : texte seul.
+ */
+import { getTechLogo } from '../lib/techLogos';
+
+interface Props {
+  name: string;
+}
+const { name } = Astro.props;
+
+const logo = getTechLogo(name);
+---
+
+<li class="tag">
+  {logo && (
+    <svg
+      class="tag-logo"
+      viewBox="0 0 24 24"
+      fill={logo.colour}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={logo.path} />
+    </svg>
+  )}
+  {name}
+</li>

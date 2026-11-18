@@ -1,5 +1,8 @@
-/** Système d'animation : une seule courbe, trois durées. */
-export const EASE = 'expo.out';
+/** Système d'animation (Motion) : une seule courbe, trois durées. */
+import type { Easing } from 'motion';
+
+/** Équivalent de « expo.out », identique à la courbe CSS --ease-expo. */
+export const EASE: Easing = [0.16, 1, 0.3, 1];
 
 export const DURATION = {
   fast: 0.4,

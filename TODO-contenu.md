@@ -4,33 +4,14 @@ Tout ce qui manque est affiché sur le site sous forme de `[placeholder]` visibl
 
 ## Identité
 
-- [ ] **GitHub** : URL du profil → `src/data/site.ts` (`github`). Tant qu'il est vide, la section Contact affiche un placeholder.
 - [ ] **Adresse du site** : variable `SITE_URL` (URL canonique, sitemap, Open Graph). Par défaut `https://example.com`.
 
 ## Études de cas (projets phares)
 
-Pour chacun des trois fichiers, en français **et** en anglais, ajouter dans l'en-tête les champs `problem`, `constraints`, `tradeoffs` et `result` :
+Les sections Problème, Contraintes, Compromis et Résultat sont rédigées (FR et EN) à partir du profil, sans chiffres inventés.
 
-- [ ] `src/content/projets/fr/track-advance.md` et `src/content/projets/en/track-advance.md`
-- [ ] `src/content/projets/fr/comparecycle.md` et `src/content/projets/en/comparecycle.md`
-- [ ] `src/content/projets/fr/pampers.md` et `src/content/projets/en/pampers.md`
-
-Sections concernées :
-
-- [ ] **Problème** (`problem`)
-- [ ] **Contraintes** (`constraints`)
-- [ ] **Compromis** (`tradeoffs`)
-- [ ] **Résultat chiffré** (`result`)
-
-La section « Approche » est déjà remplie avec les puces de l'expérience correspondante.
-
-## Visuels
-
-- [ ] Visuel de **Track Advance** — doit rester anonymisé.
-- [ ] Visuel de **CompaRecycle**.
-- [ ] Visuel de **Pampers**.
-
-En attendant, un bloc gris légendé les remplace (accueil et étude de cas).
+- [ ] **À relire** : vérifier que chaque texte correspond bien à la réalité de la mission.
+- [ ] **Résultats chiffrés** : ajouter des chiffres réels si disponibles (performance, volumes, délais) dans le champ `result`.
 
 ## Traductions à relire
 

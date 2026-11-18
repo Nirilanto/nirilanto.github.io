@@ -3,60 +3,79 @@ import { Picture } from 'astro:assets';
 import portrait from '../assets/venerand-detoure.png';
 import portraitNight from '../assets/venerand-nuit.jpg';
 import Icon from './Icon.astro';
-import ThreadsStatic from './ThreadsStatic.astro';
-import WeaveCanvas from './webgl/WeaveCanvas.tsx';
 import { heroCopy, profile, site } from '../data/site';
 import { toLocale, useTranslations } from '../i18n';
+import { getTechLogo } from '../lib/techLogos';
 
 const locale = toLocale(Astro.currentLocale);
 const t = useTranslations(locale);
 const { titleParts, location } = profile[locale];
 const [role] = titleParts;
 const copy = heroCopy[locale];
+// Technologies, en logos seuls : une seule bande qui défile.
+const resolve = (names: string[]) =>
+  names.flatMap((name) => {
+    const logo = getTechLogo(name);
+    if (!logo) return [];
+    const id = `tech-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    return [{ name, id, ...logo }];
+  });
+const techRows = [
+  resolve([
+    'React',
+    'Next.js',
+    'Vue.js',
+    'Angular',
+    'TypeScript',
+    'JavaScript',
+    'HTML5',
+    'CSS',
+    'Tailwind',
+    'Node.js',
+    'NestJS',
+    'GraphQL',
+    'PostgreSQL',
+    'MongoDB',
+    'MariaDB',
+    'Elasticsearch',
+    'Kafka',
+    'Claude',
+    'MCP',
+    'Anthropic',
+    'Git',
+    'GitHub',
+    'GitHub Actions',
+    'GitLab CI/CD',
+    'Docker',
+    'Kubernetes',
+    'Jenkins',
+    'Jest',
+    'Cypress',
+    'SonarCloud',
+    'Keycloak',
+    'Figma',
+    'Jira',
+  ]),
+];
+// La bande est répétée pour boucler sans raccord, même sur un écran très large.
+const COPIES = 4;
 const statementText = copy.statement.map((part) => part.text).join('');
 ---
 
-<section
-  id="accueil"
-  class="hero bg-bg relative isolate overflow-clip"
-  aria-labelledby="hero-title"
-  data-hero
->
-  <!-- Repli statique, derrière le texte. -->
-  <div class="hero-static text-accent absolute inset-0 -z-10" aria-hidden="true">
-    <ThreadsStatic />
-  </div>
-  <!-- Rubans animés, par-dessus le texte en mode fusion (verre teinté). -->
-  <div class="hero-glass" aria-hidden="true">
-    <WeaveCanvas client:idle />
-  </div>
-
+<section id="accueil" class="hero relative overflow-clip" aria-labelledby="hero-title" data-hero>
+  <!-- Les rubans animés vivent dans Base.astro : calque fixe, commun à toutes les pages.
+       Pas de contexte d'empilement ici, pour que le portrait passe devant eux. -->
   <div class="hero-grid container-page">
-    <div class="hero-head">
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-hero-fade>
-        <p class="label">
-          {t('hero.label')} — {location}
-        </p>
-        <p class="hero-pill">
-          <span class="hero-pill-dot" aria-hidden="true"></span>
-          {copy.experience}
-        </p>
-      </div>
-
-      <!-- Le nom reste le titre de la page, mais c'est l'accroche qui porte le hero. -->
-      <div class="mt-6 flex flex-wrap items-baseline gap-x-5 gap-y-1">
-        <h1 id="hero-title" class="hero-name" aria-label={site.name}>
-          <span class="hero-line" aria-hidden="true" data-hero-line>
-            {site.firstName}
-          </span>
-          <span class="hero-line outline-text" aria-hidden="true" data-hero-line>
-            {site.lastName}
-          </span>
-        </h1>
-        <p class="text-muted font-mono text-xs tracking-wider uppercase" data-hero-fade>
-          {role}
-        </p>
-      </div>
+    <!-- L'étiquette et la pastille d'expérience sont dans l'en-tête ; sur les écrans
+         trop étroits pour les y loger, elles restent ici. -->
+    <div class="hero-label flex flex-wrap items-center gap-x-4 gap-y-2 xl:hidden" data-hero-fade>
+      <p class="label">
+        {t('hero.label')} — {location}
+      </p>
+      <p class="pill">
+        <span class="pill-dot" aria-hidden="true"></span>
+        {copy.experience}
+      </p>
     </div>
 
     <figure class="hero-figure" data-hero-figure>
@@ -99,9 +118,24 @@ const statementText = copy.statement.map((part) => part.text).join('');
       </div>
     </figure>
 
+    <!-- Le nom reste le titre de la page ; il se range sous le portrait, avec le rôle. -->
+    <div class="hero-id">
+      <h1 id="hero-title" class="hero-name" aria-label={site.name}>
+        <span class="hero-line" aria-hidden="true" data-hero-line>
+          {site.firstName}
+        </span>
+        <span class="hero-line outline-text" aria-hidden="true" data-hero-line>
+          {site.lastName}
+        </span>
+      </h1>
+      <p class="text-muted mt-2 font-mono text-xs tracking-wider uppercase" data-hero-fade>
+        {role}
+      </p>
+    </div>
+
     <div class="hero-info" data-hero-info>
       <div>
-        <!-- Phrase d'accroche : barre oblique, mots surlignés qui se remplissent à l'entrée. -->
+        <!-- Phrase d'accroche : barre oblique, mots-clés en couleur d'accent. -->
         <p class="hero-statement" aria-label={statementText} data-hero-fade>
           <span class="hero-slash" aria-hidden="true"></span>
           <span aria-hidden="true">
@@ -129,34 +163,76 @@ const statementText = copy.statement.map((part) => part.text).join('');
       </div>
     </div>
 
-    <!-- Trois piliers : pastilles de verre flottant en cascade devant le portrait. -->
-    <ul class="hero-chips">
+    <!-- Trois piliers : une ligne éditoriale fine, sous un filet dégradé. -->
+    <ul class="hero-chips" data-hero-fade>
       {copy.pillars.map((pillar, i) => (
-        <li class={`hero-chip-slot hero-chip-slot-${i + 1}`} data-hero-fade>
-          <span class="hero-chip">
-            <span class="hero-chip-icon">
-              <Icon name={pillar.icon} size={20} />
-            </span>
-            <span class="hero-chip-index">{String(i + 1).padStart(2, '0')}</span>
-            <span class="hero-chip-label">{pillar.label}</span>
-          </span>
+        <li class="hero-chip">
+          <span class="hero-chip-index">{String(i + 1).padStart(2, '0')}</span>
+          <Icon name={pillar.icon} size={15} class="hero-chip-icon" />
+          <span class="hero-chip-label">{pillar.label}</span>
         </li>
       ))}
     </ul>
+
+    <!-- Technologies : une bande de logos qui défile, tout en bas à gauche.
+         Les tracés sont définis une fois (symboles) puis réutilisés par chaque tuile. -->
+    <div class="hero-tech" data-hero-fade>
+      <svg class="sr-only" aria-hidden="true" focusable="false">
+        {techRows.flat().map((item) => (
+          <symbol id={item.id} viewBox="0 0 24 24">
+            <path d={item.path} />
+          </symbol>
+        ))}
+      </svg>
+      {techRows.map((row, r) => (
+        <div class:list={['hero-tech-row', r % 2 === 1 && 'hero-tech-row-reverse']}>
+          <div class="hero-tech-track">
+            {Array.from({ length: COPIES }, (_, copy) => (
+              <ul
+                class="hero-tech-list"
+                aria-label={copy === 0 ? t('about.stack') : undefined}
+                aria-hidden={copy > 0 ? 'true' : undefined}
+              >
+                {row.map((item) => (
+                  <li
+                    class="hero-tech-tile"
+                    title={item.name}
+                    style={`--c: ${item.colour === 'currentColor' ? 'var(--color-fg)' : item.colour}`}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <use href={`#${item.id}`} />
+                    </svg>
+                    {copy === 0 && <span class="sr-only">{item.name}</span>}
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   </div>
 </section>
 
 <style>
-  /* Mobile : titre, portrait, texte. Bureau : texte à gauche, portrait debout à droite. */
+  /* Mobile : étiquette, portrait, nom, accroche, piliers.
+     Bureau : portrait puis nom à droite, tout le reste à gauche. */
   .hero-grid {
     display: grid;
-    grid-template-areas: 'head' 'figure' 'info' 'chips';
+    grid-template-areas: 'label' 'figure' 'id' 'info' 'chips' 'tech';
     row-gap: 1.5rem;
     min-height: 100svh;
     padding-top: calc(var(--nav-h) + 1rem);
   }
-  .hero-head {
-    grid-area: head;
+  .hero-label {
+    grid-area: label;
+  }
+  .hero-id {
+    grid-area: id;
+    /* Sous le portrait, aligné comme lui. */
+    display: grid;
+    justify-items: end;
+    text-align: right;
   }
   .hero-figure {
     grid-area: figure;
@@ -165,13 +241,12 @@ const statementText = copy.statement.map((part) => part.text).join('');
     grid-area: info;
     display: grid;
     gap: 2rem;
-    padding-bottom: 2.5rem;
   }
   .hero-name {
     display: flex;
     flex-wrap: wrap;
     gap: 0 0.28em;
-    font-size: clamp(1.75rem, 3vw, 3.25rem);
+    font-size: clamp(2rem, 3.5vw, 4rem);
     line-height: 1.05;
   }
   .hero-line {
@@ -179,50 +254,37 @@ const statementText = copy.statement.map((part) => part.text).join('');
   }
   @media (min-width: 64rem) {
     .hero-grid {
-      /* Nom et accroche forment un seul bloc centré ; le portrait occupe toute la hauteur. */
+      /* À gauche, le texte calé en haut ; à droite, le portrait. Dernière rangée :
+         les logos à gauche, le nom à droite, sur la même ligne ; les piliers juste au-dessus. */
       grid-template-columns: minmax(0, 1fr) clamp(20rem, 35vw, 44rem);
-      grid-template-rows: 1fr auto auto 1.25fr;
-      grid-template-areas: '. figure' 'head figure' 'info figure' '. figure';
+      grid-template-rows: auto auto 1fr auto auto;
+      grid-template-areas:
+        'label figure'
+        'info figure'
+        '. figure'
+        'chips figure'
+        'tech id';
       column-gap: clamp(2rem, 4vw, 5rem);
       row-gap: 0;
     }
+    .hero-id {
+      position: relative;
+      z-index: 12; /* devant le calque des rubans, comme le portrait */
+      justify-items: center;
+      padding-top: 1rem;
+      padding-bottom: clamp(1rem, 3svh, 2rem);
+      text-align: center;
+    }
+    .hero-name {
+      justify-content: center;
+    }
     .hero-info {
       gap: 2.25rem;
-      padding-top: clamp(1.75rem, 5svh, 3.5rem);
-      padding-bottom: 0;
+      padding-top: clamp(0.5rem, 2svh, 1.25rem);
     }
   }
 
-  /* Pastille « +8 ans d'expérience » */
-  .hero-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.3rem 0.8rem;
-    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .hero-pill-dot {
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: 50%;
-    background: var(--color-accent);
-    animation: hero-pulse 2.4s var(--ease-expo) infinite;
-  }
-  @keyframes hero-pulse {
-    50% {
-      transform: scale(1.9);
-      opacity: 0.35;
-    }
-  }
-
-  /* Phrase d'accroche avec barre oblique et mots surlignés */
+  /* Phrase d'accroche avec barre oblique */
   .hero-statement {
     position: relative;
     max-width: 14.5em;
@@ -243,134 +305,186 @@ const statementText = copy.statement.map((part) => part.text).join('');
     background: var(--color-accent);
     transform: skewX(-6deg);
   }
+  /* Mots-clés : simplement en couleur d'accent, sans cartouche. */
   .hero-mark {
-    position: relative;
-    display: inline-block;
-    padding-inline: 0.22em;
-    margin-inline: -0.08em;
-    white-space: nowrap;
-  }
-  .hero-mark::before {
-    content: '';
-    position: absolute;
-    inset: 0.08em 0;
-    border-radius: 0.28em;
-    transform-origin: 0 50%;
-    transition: transform var(--duration-slow) var(--ease-expo) 0.9s;
-  }
-  .hero-mark-soft::before {
-    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
-  }
-  .hero-mark-soft {
     color: var(--color-accent);
-  }
-  .hero-mark-solid::before {
-    background: var(--color-accent);
-    transform: rotate(-1.5deg);
-  }
-  .hero-mark-solid {
-    color: var(--color-on-accent);
+    white-space: nowrap;
   }
   .hero-mark-text {
     position: relative;
   }
 
-  /* Trois piliers : pastilles de verre */
-  .hero-chips {
-    grid-area: chips;
+  /* Technologies : une bande de tuiles qui défile */
+  .hero-tech {
+    grid-area: tech;
     display: grid;
-    gap: 0.5rem;
+    gap: 0.6rem;
+    min-width: 0;
     padding-bottom: 2.5rem;
   }
-  .hero-chip {
-    display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr);
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.55rem 1rem 0.55rem 0.55rem;
-    border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-line));
-    border-radius: 1rem;
-    background: color-mix(in srgb, var(--color-card) 72%, transparent);
-    backdrop-filter: blur(14px) saturate(1.4);
-    box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--color-accent) 70%, transparent);
+  @media (min-width: 64rem) {
+    /* En bas à gauche, à la hauteur du nom. */
+    .hero-tech {
+      align-self: center;
+      padding-bottom: clamp(1rem, 3svh, 2rem);
+    }
   }
-  .hero-chip-icon {
+  .hero-tech-row {
+    overflow: hidden;
+    /* Marge pour que le survol (tuile soulevée, halo) ne soit pas rogné. */
+    padding-block: 0.6rem;
+    margin-block: -0.6rem;
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .hero-tech-track {
+    display: flex;
+    width: max-content;
+    animation: hero-tech-scroll 90s linear infinite;
+  }
+  .hero-tech-row-reverse .hero-tech-track {
+    animation-direction: reverse;
+    animation-duration: 56s;
+  }
+  /* Le défilement s'arrête quand on survole la bande, pour viser un logo. */
+  .hero-tech-row:hover .hero-tech-track {
+    animation-play-state: paused;
+  }
+  @keyframes hero-tech-scroll {
+    to {
+      transform: translateX(-25%); /* une copie sur quatre */
+    }
+  }
+  .hero-tech-list {
+    display: flex;
+  }
+  .hero-tech-tile {
     display: grid;
     place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.65rem;
-    background: var(--color-accent);
-    color: var(--color-on-accent);
+    width: 2.9rem;
+    height: 2.9rem;
+    margin-right: 0.7rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--color-card) 70%, transparent);
+    color: var(--c);
+    transition:
+      transform var(--duration-fast) var(--ease-expo),
+      border-color var(--duration-fast) var(--ease-expo),
+      box-shadow var(--duration-fast) var(--ease-expo);
+  }
+  .hero-tech-tile svg {
+    width: 1.45rem;
+    height: 1.45rem;
+    fill: currentColor;
+    transition: transform var(--duration-fast) var(--ease-expo);
+  }
+  .hero-tech-tile:hover {
+    transform: translateY(-5px);
+    border-color: var(--c);
+    box-shadow: 0 12px 26px -12px var(--c);
+  }
+  .hero-tech-tile:hover svg {
+    transform: scale(1.18) rotate(-6deg);
+  }
+  /* Mouvement réduit : pas de défilement, une seule copie, sur plusieurs lignes. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-tech-row {
+      mask-image: none;
+    }
+    .hero-tech-track {
+      width: auto;
+      animation: none;
+    }
+    .hero-tech-list {
+      flex-wrap: wrap;
+      row-gap: 0.6rem;
+    }
+    .hero-tech-list[aria-hidden] {
+      display: none;
+    }
+  }
+
+  /* Trois piliers : ligne éditoriale — numéro, pictogramme au trait, libellé */
+  .hero-chips {
+    grid-area: chips;
+    position: relative;
+    display: grid;
+    gap: 0.6rem;
+    padding-top: 0.9rem;
+    padding-bottom: 1.25rem;
+  }
+  /* Filet qui s'estompe vers la droite. */
+  .hero-chips::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--color-accent), transparent 85%);
+    opacity: 0.55;
+  }
+  .hero-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
   }
   .hero-chip-index {
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    color: var(--color-muted);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+  }
+  .hero-chip :global(.hero-chip-icon) {
+    flex: none;
+    color: var(--color-accent);
+    transition: transform var(--duration-fast) var(--ease-expo);
   }
   .hero-chip-label {
+    position: relative;
     font-family: var(--font-display);
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    line-height: 1.15;
-    white-space: nowrap;
+    line-height: 1.2;
+  }
+  /* Survol : le pictogramme bascule, un trait se tire sous le libellé. */
+  .hero-chip-label::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -3px 0;
+    height: 1px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform var(--duration-fast) var(--ease-expo);
+  }
+  .hero-chip:hover .hero-chip-label::after {
+    transform: scaleX(1);
+  }
+  .hero-chip:hover :global(.hero-chip-icon) {
+    transform: rotate(-10deg) scale(1.15);
   }
   @media (min-width: 64rem) {
-    /* Même cadre que le portrait, par-dessus lui. */
     .hero-chips {
-      grid-area: figure;
-      position: relative;
-      z-index: 12;
-      display: block;
-      align-self: end;
-      justify-self: end;
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      max-height: calc(100svh - var(--nav-h) - 1rem);
-      padding: 0;
-      pointer-events: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 0;
     }
-    .hero-chip-slot {
-      position: absolute;
-    }
-    .hero-chip-slot-1 {
-      left: -6%;
-      top: 53%;
-    }
-    .hero-chip-slot-2 {
-      left: 5%;
-      top: 65%;
-    }
-    .hero-chip-slot-3 {
-      left: -10%;
-      top: 77%;
-    }
-    .hero-chip {
-      animation: hero-float 7s ease-in-out infinite;
-    }
-    .hero-chip-slot-1 .hero-chip {
-      rotate: -3deg;
-    }
-    .hero-chip-slot-2 .hero-chip {
-      rotate: 2.5deg;
-      animation-delay: -2.3s;
-    }
-    .hero-chip-slot-3 .hero-chip {
-      rotate: -1.5deg;
-      animation-delay: -4.6s;
-    }
-  }
-  @keyframes hero-float {
-    50% {
-      transform: translateY(-9px);
+    /* Séparateur oblique entre deux piliers. */
+    .hero-chip + .hero-chip::before {
+      content: '';
+      width: 1px;
+      height: 1rem;
+      margin-inline: 1.1rem 0.6rem;
+      background: var(--color-line);
+      transform: skewX(-18deg);
     }
   }
 
   /* Portrait posé sur le bas du hero, sans panneau derrière. */
   .hero-figure {
     position: relative;
-    z-index: 11; /* devant les rubans : ils passent derrière la silhouette */
+    z-index: 11; /* devant le calque des rubans (z 10) : ils passent derrière la silhouette */
     align-self: end;
     justify-self: end;
     /* Mobile : portrait réduit pour que l'accroche commence dans le premier écran. */
@@ -380,7 +494,8 @@ const statementText = copy.statement.map((part) => part.text).join('');
   @media (min-width: 64rem) {
     .hero-figure {
       width: 100%;
-      max-height: calc(100svh - var(--nav-h) - 1rem);
+      /* Hauteur d'écran moins l'en-tête et le bloc du nom en dessous. */
+      max-height: calc(100svh - var(--nav-h) - 9rem);
     }
   }
   .hero-figure :global(.hero-portrait) {
@@ -415,36 +530,6 @@ const statementText = copy.statement.map((part) => part.text).join('');
     display: none;
   }
 
-  .hero-glass {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    pointer-events: none;
-    mix-blend-mode: var(--ribbon-blend);
-  }
-  .hero :global(.weave-canvas) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity var(--duration-slow) var(--ease-expo);
-  }
-  .hero :global(.weave-canvas[data-ready='true']) {
-    opacity: 1;
-  }
-
-  .hero-static :global(.threads-static) {
-    width: 100%;
-    height: 100%;
-    opacity: 0.4;
-    transition: opacity var(--duration-slow) var(--ease-expo);
-  }
-  /* Le tracé statique s'efface dès que le shader a pris le relais. */
-  .hero:has(:global(.weave-canvas[data-ready='true'])) :global(.threads-static) {
-    opacity: 0;
-  }
-
   .hero-line {
     /* Marge pour que le masque ne rogne pas le contour des lettres. */
     padding-block: 0.04em;
@@ -464,10 +549,11 @@ const statementText = copy.statement.map((part) => part.text).join('');
   }
   @media (min-width: 64rem) {
     .hero-badge {
-      /* En haut à gauche du portrait : le bord droit est réservé au sommaire. */
-      left: -1.5rem;
+      /* En haut à droite du portrait, au-dessus du sommaire latéral. */
+      left: auto;
+      right: -0.5rem;
       bottom: auto;
-      top: 7%;
+      top: 4%;
     }
   }
   .hero-badge-ring {
@@ -500,12 +586,6 @@ const statementText = copy.statement.map((part) => part.text).join('');
   /* État initial avant l'animation d'entrée : uniquement si JS et mouvement autorisés.
      Le filet de sécurité réaffiche tout si le script ne s'exécute pas. */
   @media (prefers-reduced-motion: no-preference) {
-    :global(.js) [data-hero]:not([data-hero-ready]) .hero-mark-soft::before {
-      transform: scaleX(0);
-    }
-    :global(.js) [data-hero]:not([data-hero-ready]) .hero-mark-solid::before {
-      transform: rotate(-1.5deg) scaleX(0);
-    }
     :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-line],
     :global(.js) [data-hero]:not([data-hero-ready]) [data-hero-fade],
     :global(.js) [data-hero]:not([data-hero-ready]) :global([data-hero-portrait]) {
@@ -521,11 +601,9 @@ const statementText = copy.statement.map((part) => part.text).join('');
 </style>
 
 <script>
-  import gsap from 'gsap';
-  import { SplitText } from 'gsap/SplitText';
+  import { animate, stagger } from 'motion';
   import { DURATION, EASE, prefersReducedMotion } from '../lib/motion';
-
-  gsap.registerPlugin(SplitText);
+  import { splitText } from '../lib/splitText';
 
   async function initHero() {
     const hero = document.querySelector<HTMLElement>('[data-hero]');
@@ -538,21 +616,36 @@ const statementText = copy.statement.map((part) => part.text).join('');
     // Les lettres sont mesurées une fois la police d'affichage chargée.
     await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]);
 
-    const lines = hero.querySelectorAll<HTMLElement>('[data-hero-line]');
-    const fades = hero.querySelectorAll<HTMLElement>('[data-hero-fade]');
-    const split = SplitText.create(lines, { type: 'chars', mask: 'chars', aria: 'none' });
+    const lines = [...hero.querySelectorAll<HTMLElement>('[data-hero-line]')];
+    const fades = [...hero.querySelectorAll<HTMLElement>('[data-hero-fade]')];
+    const photo = [...hero.querySelectorAll<HTMLElement>('[data-hero-portrait]')];
+    const splits = lines.map((line) => splitText(line, 'chars'));
+    const chars = splits.flatMap((split) => split.units);
 
-    gsap.set(split.chars, { yPercent: 115, rotate: 9, transformOrigin: '0% 100%' });
-    gsap.set(fades, { y: 24, opacity: 0 });
-    const photo = hero.querySelectorAll('[data-hero-portrait]');
-    gsap.set(photo, { yPercent: 6, opacity: 0 });
+    // État de départ posé avant de lever le voile (data-hero-ready).
+    chars.forEach((char) => {
+      char.style.transformOrigin = '0% 100%';
+      char.style.transform = 'translateY(115%) rotate(9deg)';
+    });
+    [...fades, ...photo].forEach((el) => (el.style.opacity = '0'));
     hero.dataset.heroReady = 'true';
 
-    gsap
-      .timeline({ defaults: { ease: EASE } })
-      .to(split.chars, { yPercent: 0, rotate: 0, duration: DURATION.slow, stagger: 0.04 })
-      .to(photo, { yPercent: 0, opacity: 1, duration: DURATION.slow }, 0.35)
-      .to(fades, { y: 0, opacity: 1, duration: DURATION.base, stagger: 0.08 }, DURATION.fast);
+    const letters = animate(
+      chars,
+      { y: ['115%', '0%'], rotate: [9, 0] },
+      { duration: DURATION.slow, ease: EASE, delay: stagger(0.04) },
+    );
+    animate(
+      photo,
+      { y: ['6%', '0%'], opacity: [0, 1] },
+      { duration: DURATION.slow, ease: EASE, delay: 0.35 },
+    );
+    animate(
+      fades,
+      { y: [24, 0], opacity: [0, 1] },
+      { duration: DURATION.base, ease: EASE, delay: stagger(0.08, { startDelay: DURATION.fast }) },
+    );
+    void letters.finished.then(() => splits.forEach((split) => split.revert()));
   }
 
   document.addEventListener('astro:page-load', initHero);
